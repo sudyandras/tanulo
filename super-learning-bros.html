@@ -156,6 +156,20 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated}
 .btn.big{font-size:14px;padding:14px 18px}
 .hbtns{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .hbtns .seg .btn{font-size:10px;padding:8px 10px;box-shadow:3px 3px 0 #000}
+.pchip{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px}
+.pchip img{width:30px;height:30px;image-rendering:pixelated;object-fit:contain;background:#5c94fc;border:2px solid #000}
+.pcard{position:relative}
+.pcard .delp{position:absolute;top:4px;right:4px;font-size:9px;padding:4px 6px;box-shadow:2px 2px 0 #000}
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-family:var(--px);font-size:11px}
+.field input{font-family:var(--px);font-size:20px;padding:12px;border:4px solid #000;max-width:420px;background:#fff;-webkit-user-select:text;user-select:text}
+.field input.bad{animation:shake .3s;border-color:var(--red)}
+.avatars{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+.avatars button{background:#5c94fc;border:4px solid #000;box-shadow:4px 4px 0 #000;padding:12px 6px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--px);font-size:10px;color:#fff;text-shadow:2px 2px 0 #000}
+.avatars button img{width:52px;height:68px;image-rendering:pixelated;object-fit:contain}
+.avatars button.sel{background:var(--gold);outline:4px solid var(--red);transform:translateY(-3px)}
+.lvl .rec{font-size:12px;color:#555;margin-top:2px}
+.recbanner{font-family:var(--px);font-size:13px;color:#fff;background:var(--red);border:3px solid #000;display:inline-block;padding:6px 10px;margin-bottom:8px;animation:pulse .6s infinite alternate}
+.newrec{color:var(--red)}
 .skill img{width:58px;height:58px;image-rendering:pixelated;object-fit:contain}
 [hidden]{display:none!important}
 @media (max-width:600px){
@@ -168,10 +182,28 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated}
 <body>
 <header>
   <h1 data-i18n-html="brand"></h1>
-  <div class="hbtns"><div class="seg" id="langSeg"></div><button class="btn" id="soundBtn">♪</button></div>
+  <div class="hbtns"><button class="btn pchip" id="playerBtn" hidden></button><div class="seg" id="langSeg"></div><button class="btn" id="soundBtn">♪</button></div>
 </header>
 
-<main id="menu">
+<main id="who">
+  <section class="panel" id="whoPick">
+    <h2 data-i18n="whoTitle"></h2>
+    <div class="skills" id="playerCards"></div>
+  </section>
+  <section class="panel" id="whoNew" hidden>
+    <h2 data-i18n="newPlayerHead"></h2>
+    <label class="field"><span data-i18n="yourName"></span><input id="pName" maxlength="16" autocomplete="off" spellcheck="false"></label>
+    <div class="field"><span data-i18n="pickChar"></span></div>
+    <div class="avatars" id="avatarGrid"></div>
+    <div class="lbtns" style="justify-content:flex-start;margin-top:18px">
+      <button class="btn primary big" id="pCreate" data-i18n="letsGo"></button>
+      <button class="btn big" id="pCancel" data-i18n="cancel"></button>
+    </div>
+  </section>
+  <div class="ground"></div>
+</main>
+
+<main id="menu" hidden>
   <section class="panel">
     <h2 data-i18n="learnHead"></h2>
     <div class="skills" id="learnCards"></div>
@@ -229,6 +261,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
 const rnd = n => Math.floor(Math.random() * n);
@@ -240,7 +273,8 @@ const pl = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 let lang = store.get('slb-lang', 'hu');
 const tx = (en, hu) => ({ en, hu });
 const tr = v => (v && typeof v === 'object' && 'hu' in v) ? v[lang] : v;
-function t(key, ...args){ const v = tr(S[key]); return typeof v === 'function' ? v(...args) : v; }
+const val = (v, ...args) => { v = tr(v); return typeof v === 'function' ? v(...args) : v; };
+const t = (key, ...args) => val(S[key], ...args);
 const MUL = () => lang === 'hu' ? '·' : '×'; // Hungarian schools write multiplication as a dot
 // Hungarian suffixes: "3-szor" (3 times) and "hármasával" (counting by 3s)
 const HU_SZOR = ['', 'szer', 'szer', 'szor', 'szer', 'ször', 'szor', 'szer', 'szor', 'szer', 'szer'];
@@ -253,7 +287,7 @@ const S = {
   practiceHead: tx('Practice: pick a skill', 'Gyakorlás: válassz témát'),
   pickLevel: tx(n => `Pick a level — ${n}`, n => `Válassz pályát — ${n}`),
   optionsHead: tx('Options', 'Beállítások'),
-  pace: tx("Mario's pace", 'Mario tempója'),
+  pace: tx(() => `${hero()}'s pace`, () => `${hero()} tempója`),
   keyboard: tx('Keyboard', 'Billentyűzet'),
   freePlay: tx('Free play (open all levels)', 'Szabad játék (minden pálya nyitva)'),
   relaxed: tx('Relaxed (waits)', 'Nyugis (vár)'), running: tx('Running', 'Fut'), runningFast: tx('Running fast', 'Gyorsan fut'),
@@ -293,18 +327,18 @@ const S = {
   showMe: tx('▶ Show me!', '▶ Mutasd!'), newNums: tx('New numbers', 'Új számok'),
   pressShow: tx('Press "Show me!" to watch.', 'Nyomd meg a „Mutasd!” gombot!'),
   addIntro: tx((a, b) => `What is ${a} plus ${b}? Let's find out!`, (a, b) => `Mennyi ${a} plusz ${b}? Nézzük meg!`),
-  addFirst: tx(a => `Mario jumps, and the block gives ${pl(a, 'red mushroom')}.`, a => `Mario ugrik, és a dobozból ${a} piros gomba jön elő.`),
+  addFirst: tx(a => `${hero()} jumps, and the block gives ${pl(a, 'red mushroom')}.`, a => `${hero()} ugrik, és a dobozból ${a} piros gomba jön elő.`),
   thatsN: tx(n => `That's ${n}!`, n => `Ez ${n}!`),
   addMore: tx(b => `Now ${b} more. This time ${b === 1 ? 'it is' : 'they are'} green!`, b => `Most jön még ${b} gomba, ${b === 1 ? 'ez zöld' : 'ezek zöldek'}!`),
-  addZero: tx('Then Mario gets 0 green mushrooms. None at all!', 'Zöld gomba most nem jön. Egy sem, vagyis nulla!'),
+  addZero: tx(() => `Then ${hero()} gets 0 green mushrooms. None at all!`, 'Zöld gomba most nem jön. Egy sem, vagyis nulla!'),
   together: tx("Let's put them all together and count them!", 'Tegyük őket egy helyre, és számoljuk meg mindet!'),
   tenMore: tx((r, n) => `Look! A full row of 10, and ${r} more. That makes ${n}.`, (r, n) => `Nézd! Egy teli sor 10, és még ${r}. Ez összesen ${n}.`),
   addEnd: tx((a, b, n) => `${a} plus ${b} equals ${n}!`, (a, b, n) => `${a} plusz ${b} egyenlő ${n}!`),
   subIntro: tx((a, b) => `What is ${a} take away ${b}? Let's find out!`, (a, b) => `Mennyi ${a} mínusz ${b}? Nézzük meg!`),
   subCome: tx(a => `Here come ${pl(a, 'Goomba')}!`, a => `Jön ${a} Goomba!`),
-  subStomp: tx(b => `Mario stomps ${b} of them. Watch!`, b => `Mario rátapos ${b} Goombára. Figyeld!`),
+  subStomp: tx(b => `${hero()} stomps ${b} of them. Watch!`, b => `${hero()} rátapos ${b} Goombára. Figyeld!`),
   subGone: tx(b => `${pl(b, 'Goomba')} ${b === 1 ? 'is' : 'are'} squished and taken away.`, b => `${b} Goomba kilapult, ${b === 1 ? 'őt' : 'őket'} elvettük.`),
-  subNone: tx("Mario doesn't stomp any. Nothing is taken away!", 'Mario most egyikre sem tapos rá. Semmit sem veszünk el!'),
+  subNone: tx(() => `${hero()} doesn't stomp any. Nothing is taken away!`, () => `${hero()} most egyikre sem tapos rá. Semmit sem veszünk el!`),
   subLeft: tx("How many Goombas are left? Let's count!", 'Hány Goomba maradt? Számoljuk meg!'),
   subZero: tx("None are left! That's zero.", 'Egy sem maradt! Ez nulla.'),
   subEnd: tx((a, b, n) => `${a} take away ${b} equals ${n}!`, (a, b, n) => `${a} mínusz ${b} egyenlő ${n}!`),
@@ -313,6 +347,17 @@ const S = {
   mulAnother: tx(b => `Here is another group of ${b}!`, b => `Itt egy újabb csoport, ebben is ${b} érme!`),
   mulGroupN: tx((i, b) => `Group ${i}: ${b} more!`, (i, b) => `${i}. csoport: még ${b}!`),
   mulCounted: tx((b, list) => `We counted by ${b}s: ${list}!`, (b, list) => `${cap(HU_BY[b])} számoltunk: ${list}!`),
+  // players & records
+  whoTitle: tx("Who's playing?", 'Ki játszik?'),
+  newPlayer: tx('+ New player', '+ Új játékos'), newPlayerHead: tx('New player', 'Új játékos'),
+  yourName: tx('Your name', 'A neved'), pickChar: tx('Pick your character', 'Válassz figurát'),
+  letsGo: tx("Let's go! ▶", 'Kezdjük! ▶'), cancel: tx('Cancel', 'Mégse'), del: tx('Delete', 'Törlés'),
+  nameNeeded: tx('Type your name first!', 'Előbb írd be a neved!'),
+  confirmDelete: tx(n => `Delete ${n} and all their scores?`, n => `Biztosan törlöd: ${n}? Minden eredménye elvész.`),
+  switchPlayer: tx('Switch player', 'Játékosváltás'),
+  newRecord: tx('NEW RECORD!', 'ÚJ REKORD!'),
+  bestScore: tx('Your best score', 'Legjobb pontszámod'), bestTime: tx('Your fastest time', 'Leggyorsabb időd'),
+  deviceScore: tx('Top score on this device', 'Legjobb pont ezen a gépen'), deviceTime: tx('Fastest on this device', 'Leggyorsabb ezen a gépen'),
   mulEnd: tx((a, b, n) => `${a} times ${b} equals ${n}!`, (a, b, n) => `${a}-${HU_SZOR[a]} ${b} egyenlő ${n}!`),
 };
 
@@ -501,10 +546,39 @@ const SKILLS = [
 ];
 
 /* ================= Saved state ================= */
-let prog = store.get('slb-progress', {});
-let opts = Object.assign({ pace:'relaxed', layout:'hu', free:false }, store.get('slb-opts', {}));
-const saveOpts = () => store.set('slb-opts', opts);
+// Players live in 'slb-players'; each player's own data (language, options, stars, records) in 'slb-player-<id>'.
+const DEFAULT_OPTS = { pace:'relaxed', layout:'hu', free:false };
+let players = store.get('slb-players', { list:[], last:null });
+let me = null, pdata = null, prog = {}, opts = { ...DEFAULT_OPTS };
+const savePlayers = () => store.set('slb-players', players);
+const savePlayer = () => { if(me) store.set('slb-player-' + me.id, pdata); };
+const saveOpts = savePlayer;
+const pcache = {}; // keeps players' data in memory too, in case localStorage is unavailable
+function loadPlayerData(id){
+  if(pcache[id]) return pcache[id];
+  const d = pcache[id] = store.get('slb-player-' + id, null) || {};
+  d.opts = Object.assign({ ...DEFAULT_OPTS }, d.opts);
+  d.prog = d.prog || {}; d.best = d.best || {}; d.lang = d.lang || lang;
+  return d;
+}
+const totalStars = d => Object.values(d.prog).reduce((s, arr) => s + (arr || []).reduce((a, b) => a + (b || 0), 0), 0);
+// Best score and fastest time for a level across every player on this device.
+function deviceRecords(sid, li){
+  let score = null, time = null;
+  for(const pl of players.list){
+    const d = pl.id === (me && me.id) ? pdata : loadPlayerData(pl.id);
+    const r = d.best[sid] && d.best[sid][li]; if(!r) continue;
+    if(r.score && (!score || r.score > score.v)) score = { v:r.score, name:pl.name };
+    if(r.time && (!time || r.time < time.v)) time = { v:r.time, name:pl.name };
+  }
+  return { score, time };
+}
 const levelsOf = sk => sk.kind === 'type' ? typingLevels(opts.layout) : sk.levels.map(l => ({ name: tr(l.name), gen: l.gen }));
+function recLine(sk, i){
+  const r = pdata && pdata.best[sk.id] && pdata.best[sk.id][i];
+  if(!r) return '';
+  return `<div class="rec">🏆 ${r.score || 0}${r.time ? ` · ⏱ ${r.time.toFixed(1)} ${t('sec')}` : ''}</div>`;
+}
 const starsOf = (sk, i) => (prog[sk.id] && prog[sk.id][i]) || 0;
 const unlocked = (sk, i) => opts.free || i === 0 || starsOf(sk, i - 1) >= 1;
 
@@ -525,7 +599,7 @@ function renderMenu(){
       const ok = unlocked(menuSkill, i), s = starsOf(menuSkill, i);
       return `<button class="lvl ${ok ? '' : 'locked'}" data-i="${i}" ${ok ? '' : 'disabled'}>
         <div class="qblock">${ok ? i + 1 : '🔒'}</div>
-        <div><div class="nm">${esc(l.name)}</div><div class="st">${'★'.repeat(s)}<span style="color:#ccc">${'★'.repeat(3 - s)}</span></div></div></button>`;
+        <div><div class="nm">${esc(l.name)}</div><div class="st">${'★'.repeat(s)}<span style="color:#ccc">${'★'.repeat(3 - s)}</span></div>${recLine(menuSkill, i)}</div></button>`;
     }).join('');
   }
   const seg = (id, items, cur, key) => {
@@ -544,7 +618,7 @@ function applyLang(){
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   $('#langSeg').innerHTML = [['hu', 'Magyar'], ['en', 'English']]
     .map(([k, n]) => `<button class="btn ${lang === k ? 'sel' : ''}" data-l="${k}">${n}</button>`).join('');
-  setSoundBtn(); setVoiceBtn(); renderLearnCards(); renderMenu();
+  setSoundBtn(); setVoiceBtn(); renderLearnCards(); renderMenu(); renderWho(); setPlayerChip();
   if(screen === 'game' && G){
     $('#gameTitle').textContent = t('gameTitle', tr(G.skill.name), G.li + 1, levelsOf(G.skill)[G.li].name);
     renderPrompt(); renderHint();
@@ -552,7 +626,9 @@ function applyLang(){
 }
 $('#langSeg').onclick = e => {
   const b = e.target.closest('[data-l]'); if(!b || b.dataset.l === lang) return;
-  lang = b.dataset.l; store.set('slb-lang', lang); applyLang();
+  lang = b.dataset.l; store.set('slb-lang', lang);
+  if(pdata){ pdata.lang = lang; savePlayer(); }
+  applyLang();
 };
 $('#skills').onclick = e => {
   const b = e.target.closest('.skill'); if(!b) return;
@@ -613,6 +689,43 @@ const SPR = {
   walk: sprite([...HEAD, ...BODY, ...LEGS_B]),
   jump: sprite([...HEAD, ...JUMP_BODY]),
 };
+// Playable characters: palette swaps of the plumber, plus Toad.
+const TOAD = [
+  "...WWRRWW...",
+  "..WRRRRWWW..",
+  ".WWRRWWWRRW.",
+  ".WWWWWWRRRW.",
+  "WRRWWWWWRRWW",
+  "WRRWWRRWWWWW",
+  "..SSSSSSSS..",
+  "..SKSSSSKS..",
+  "..SKSSSSKS..",
+  "...SSSSSS...",
+  "..BBYYYYBB..",
+  ".SBBWWWWBBS.",
+  ".SSBWWWWBSS.",
+  "...WWWWWW...",
+  "..KKK..KKK..",
+  ".KKKK..KKKK.",
+];
+const TOAD_PAL = { W:'#fff', R:'#e52521', S:'#fcb88c', K:'#6b3a12', B:'#2038ec', Y:'#f8d820' };
+const toadSpr = legs => sprite([...TOAD.slice(0, 14), ...legs], TOAD_PAL);
+function plumber(pal){
+  const P = { ...PAL, ...pal };
+  return { stand:sprite([...HEAD, ...BODY, ...LEGS_A], P), walk:sprite([...HEAD, ...BODY, ...LEGS_B], P), jump:sprite([...HEAD, ...JUMP_BODY], P) };
+}
+const AVATARS = [
+  { id:'mario',   name:tx('Mario', 'Mario'),          spr:SPR },
+  { id:'luigi',   name:tx('Luigi', 'Luigi'),          spr:plumber({ R:'#1aa31a' }) },
+  { id:'fire',    name:tx('Fire Mario', 'Tűz Mario'), spr:plumber({ R:'#f4f4f4', B:'#e52521' }) },
+  { id:'wario',   name:tx('Wario', 'Wario'),          spr:plumber({ R:'#f8d820', B:'#8a2be2', H:'#2b1a0a' }) },
+  { id:'waluigi', name:tx('Waluigi', 'Waluigi'),      spr:plumber({ R:'#7b2fbf', B:'#2b2b4a', H:'#2b1a0a' }) },
+  { id:'toad',    name:tx('Toad', 'Toad'),
+    spr:{ stand:toadSpr(TOAD.slice(14)), walk:toadSpr(["...KKKKK....", "....KKKK...."]), jump:toadSpr([".KKK....KKK.", "KKK......KKK"]) } },
+];
+const avatarById = id => AVATARS.find(a => a.id === id) || AVATARS[0];
+const heroSpr = () => avatarById(me && me.avatar).spr;
+function hero(){ return tr(avatarById(me && me.avatar).name); }
 
 /* ================= Game ================= */
 let G = null, screen = 'menu', virtShift = false;
@@ -821,7 +934,7 @@ function draw(){
     drawBlock(b, b === cur && G.phase === 'play');
   }
   if(!m.hidden){
-    const spr = !m.onGround ? SPR.jump : (m.walking && Math.floor(m.anim) % 2 ? SPR.walk : SPR.stand);
+    const spr = !m.onGround ? heroSpr().jump : (m.walking && Math.floor(m.anim) % 2 ? heroSpr().walk : heroSpr().stand);
     const sh = m.shake > 0 ? Math.sin(m.shake * 60) * 4 : 0;
     ctx.drawImage(spr, Math.round(m.x - spr.width / 2 - cam + sh), Math.round(m.y - spr.height));
   }
@@ -1086,12 +1199,25 @@ function showResults(){
   const sid = G.skill.id;
   prog[sid] = prog[sid] || [];
   prog[sid][G.li] = Math.max(prog[sid][G.li] || 0, stars);
-  store.set('slb-progress', prog);
+  pdata.best[sid] = pdata.best[sid] || {};
+  const rec = pdata.best[sid][G.li] || {}, roundSecs = +secs.toFixed(1);
+  const newScore = G.score > (rec.score || 0), newTime = stars >= 1 && (!rec.time || roundSecs < rec.time);
+  if(newScore) rec.score = G.score;
+  if(newTime) rec.time = roundSecs;
+  pdata.best[sid][G.li] = rec;
+  savePlayer();
+  const dev = deviceRecords(sid, G.li), NEW = ' <span class="newrec">★</span>';
+  rows.push([t('bestScore'), (rec.score || 0) + (newScore ? NEW : '')]);
+  if(rec.time) rows.push([t('bestTime'), rec.time.toFixed(1) + ' ' + t('sec') + (newTime ? NEW : '')]);
+  if(players.list.length > 1){
+    if(dev.score) rows.push([t('deviceScore'), `${dev.score.v} – ${esc(dev.score.name)}`]);
+    if(dev.time) rows.push([t('deviceTime'), `${dev.time.v.toFixed(1)} ${t('sec')} – ${esc(dev.time.name)}`]);
+  }
   const levels = levelsOf(G.skill), hasNext = G.li + 1 < levels.length && unlocked(G.skill, G.li + 1);
   const title = t(stars === 3 ? 'perfect' : stars ? 'clear' : 'keepPracticing');
   const msg = t(stars ? (hasNext ? 'nextUnlocked' : 'allDone') : 'need70');
   $('#results').innerHTML = `<div class="res">
-    <h2>${title}</h2>
+    <h2>${title}</h2>${newScore || newTime ? `<div class="recbanner">${t('newRecord')}</div>` : ''}
     <div class="stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3 - stars)}</span></div>
     <table>${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
     <p style="margin:0 0 14px;font-size:14px">${msg}</p>
@@ -1114,7 +1240,7 @@ function resultAction(a){
 }
 function toMenu(){
   if(screen === 'learn') learnStop();
-  screen = 'menu'; $('#game').hidden = true; $('#learn').hidden = true; $('#menu').hidden = false;
+  screen = 'menu'; $('#game').hidden = true; $('#learn').hidden = true; $('#who').hidden = true; $('#menu').hidden = false;
   if(G) menuSkill = G.skill;
   G = null; renderMenu();
 }
@@ -1172,8 +1298,8 @@ const TOPICS = {
     card:tx(['Adding', 'Put mushrooms together'], ['Összeadás', 'Gombák egy helyre']),
     A:{ label:tx('Red mushrooms', 'Piros gombák'), min:1, max:10, color:'#e52521' }, B:{ label:tx('Green mushrooms', 'Zöld gombák'), min:0, max:10, color:'#1aa31a' } },
   sub: { tab:tx('- Taking away', '- Kivonás'), op:'-', def:[7, 3], rand:() => { const a = randInt(3, 12); return [a, randInt(1, a)]; },
-    card:tx(['Taking away', 'Mario stomps Goombas'], ['Kivonás', 'Mario rátapos a Goombákra']),
-    A:{ label:tx('Goombas', 'Goombák'), min:1, max:18, color:'#b5501a' }, B:{ label:tx('Mario stomps', 'Mario rátapos'), min:0, max:18, color:'#777' } },
+    card:tx(() => ['Taking away', `${hero()} stomps Goombas`], () => ['Kivonás', `${hero()} rátapos a Goombákra`]),
+    A:{ label:tx('Goombas', 'Goombák'), min:1, max:18, color:'#b5501a' }, B:{ label:tx(() => `${hero()} stomps`, () => `${hero()} rátapos`), min:0, max:18, color:'#777' } },
   mul: { tab:tx('× Groups of', '· Szorzás'), op:tx('×', '·'), def:[3, 4], rand:() => [randInt(2, 5), randInt(2, 6)],
     card:tx(['Times', 'Coins in equal groups'], ['Szorzás', 'Érmék egyforma csoportokban']),
     A:{ label:tx('Groups', 'Csoportok'), min:1, max:9, color:'#2038ec' }, B:{ label:tx('Coins in each group', 'Érme csoportonként'), min:1, max:10, color:'#c88a00' } },
@@ -1397,7 +1523,7 @@ async function learnPlay(){
 function renderLearnCtrl(){
   const T = TOPICS[L.topic], [a, b] = L.nums[L.topic];
   $('#learnTabs').innerHTML = Object.entries(TOPICS).map(([k, tp]) => `<button class="btn ${k === L.topic ? 'sel' : ''}" data-t="${k}">${tr(tp.tab)}</button>`).join('');
-  const stepper = (side, v) => `<div class="stepper"><span class="slabel"><i style="background:${T[side].color}"></i>${tr(T[side].label)}</span>
+  const stepper = (side, v) => `<div class="stepper"><span class="slabel"><i style="background:${T[side].color}"></i>${val(T[side].label)}</span>
     <div class="srow"><button class="btn" data-s="${side}-">−</button><div class="qblock big">${v}</div><button class="btn" data-s="${side}+">+</button></div></div>`;
   $('#learnCtrl').innerHTML = stepper('A', a) + `<div class="opsign">${tr(T.op)}</div>` + stepper('B', b)
     + `<div class="lbtns"><button class="btn primary big" id="lPlay">${t('showMe')}</button><button class="btn big" id="lRand">${t('newNums')}</button></div>`;
@@ -1430,7 +1556,7 @@ function renderLearnCards(){
   const saved = ctx; ctx = coinCanvas.getContext('2d'); drawCoin(20, 38, 34); ctx = saved;
   const pics = { add:LSPR.mushR, sub:LSPR.goomba, mul:coinCanvas };
   $('#learnCards').innerHTML = Object.entries(pics).map(([k, c]) => {
-    const [n, s] = tr(TOPICS[k].card);
+    const [n, s] = val(TOPICS[k].card);
     return `<button class="skill" data-t="${k}"><img src="${c.toDataURL()}" alt=""><b>${n}</b><small>${s}</small></button>`;
   }).join('');
 }
@@ -1511,7 +1637,7 @@ function drawLearn(){
       ctx.fillStyle = o.color; ctx.fillRect(o.x - 3, o.y - 3, 6, 6);
     } else if(o.kind === 'mario'){
       const moving = o.tw && !o.tw.arc && o.tw.tx !== o.tw.fx;
-      const spr = o.tw && o.tw.arc ? SPR.jump : (moving && Math.floor(L.t * 9) % 2 ? SPR.walk : SPR.stand);
+      const spr = o.tw && o.tw.arc ? heroSpr().jump : (moving && Math.floor(L.t * 9) % 2 ? heroSpr().walk : heroSpr().stand);
       ctx.save(); ctx.translate(Math.round(o.x), Math.round(o.y)); ctx.scale(o.face, 1);
       ctx.drawImage(spr, -spr.width / 2, -spr.height); ctx.restore();
     } else {
@@ -1531,6 +1657,93 @@ function drawLearn(){
   }
   ctx = saved;
 }
+
+/* ================= Players: who's playing? ================= */
+let newAvatar = 'mario';
+const avatarImgCache = {};
+function avatarImg(id){
+  if(!avatarImgCache[id]) avatarImgCache[id] = outlined(avatarById(id).spr.stand).toDataURL();
+  return avatarImgCache[id];
+}
+function showWho(){
+  if(screen === 'learn') learnStop();
+  screen = 'who'; G = null;
+  ['#menu', '#game', '#learn'].forEach(sel => { $(sel).hidden = true; });
+  $('#who').hidden = false;
+  if(players.list.length){ $('#whoNew').hidden = true; $('#whoPick').hidden = false; }
+  else openNewPlayer();
+  renderWho(); setPlayerChip(); window.scrollTo({ top:0 });
+}
+function renderWho(){
+  const order = players.list.slice().sort((a, b) => (b.id === players.last) - (a.id === players.last));
+  $('#playerCards').innerHTML = order.map(pl => `<div class="skill pcard" role="button" tabindex="0" data-id="${pl.id}">
+      <button class="btn delp" data-del="${pl.id}" title="${t('del')}">✕</button>
+      <img src="${avatarImg(pl.avatar)}" alt=""><b>${esc(pl.name)}</b>
+      <small>${esc(tr(avatarById(pl.avatar).name))}</small><small style="color:#e8a000">★ ${totalStars(loadPlayerData(pl.id))}</small></div>`).join('')
+    + `<button class="skill" id="addPlayer"><div class="qblock">+</div><b>${t('newPlayerHead')}</b></button>`;
+  $('#avatarGrid').innerHTML = AVATARS.map(a =>
+    `<button class="${a.id === newAvatar ? 'sel' : ''}" data-av="${a.id}"><img src="${avatarImg(a.id)}" alt="">${esc(tr(a.name))}</button>`).join('');
+  $('#pCancel').hidden = !players.list.length;
+}
+function openNewPlayer(){
+  $('#whoNew').hidden = false; $('#whoPick').hidden = true;
+  $('#pName').value = ''; $('#pName').placeholder = ''; newAvatar = 'mario';
+  renderWho(); $('#pName').focus();
+}
+function createPlayer(){
+  const input = $('#pName'), name = input.value.trim();
+  if(!name){
+    input.classList.remove('bad'); void input.offsetWidth; input.classList.add('bad');
+    input.placeholder = t('nameNeeded'); input.focus(); sfx.error(); return;
+  }
+  const id = Date.now().toString(36) + rnd(1296).toString(36);
+  const d = { lang, opts:{ ...DEFAULT_OPTS }, prog:{}, best:{} };
+  if(!players.list.length){
+    // the first player inherits progress saved before player profiles existed
+    const oldProg = store.get('slb-progress', null), oldOpts = store.get('slb-opts', null);
+    if(oldProg) d.prog = oldProg;
+    if(oldOpts) Object.assign(d.opts, oldOpts);
+  }
+  store.set('slb-player-' + id, d); pcache[id] = d;
+  players.list.push({ id, name, avatar:newAvatar }); savePlayers();
+  selectPlayer(id);
+}
+function selectPlayer(id){
+  me = players.list.find(p => p.id === id); if(!me) return;
+  pdata = loadPlayerData(id); opts = pdata.opts; prog = pdata.prog;
+  lang = pdata.lang; store.set('slb-lang', lang);
+  players.last = id; savePlayers();
+  menuSkill = null; screen = 'menu';
+  $('#who').hidden = true; $('#menu').hidden = false;
+  ac(); sfx.coin(); applyLang(); window.scrollTo({ top:0 });
+}
+function setPlayerChip(){
+  const b = $('#playerBtn');
+  b.hidden = !me || screen === 'who';
+  if(me){ b.innerHTML = `<img src="${avatarImg(me.avatar)}" alt=""><span>${esc(me.name)}</span>`; b.title = t('switchPlayer'); }
+}
+$('#playerBtn').onclick = showWho;
+$('#playerCards').onclick = e => {
+  const del = e.target.closest('[data-del]');
+  if(del){
+    const pl = players.list.find(p => p.id === del.dataset.del);
+    if(pl && confirm(t('confirmDelete', pl.name))){
+      players.list = players.list.filter(p => p !== pl);
+      if(players.last === pl.id) players.last = null;
+      store.del('slb-player-' + pl.id); delete pcache[pl.id]; savePlayers();
+      if(me && me.id === pl.id){ me = null; pdata = null; }
+      showWho();
+    }
+    return;
+  }
+  if(e.target.closest('#addPlayer')){ openNewPlayer(); return; }
+  const c = e.target.closest('.pcard'); if(c) selectPlayer(c.dataset.id);
+};
+$('#playerCards').onkeydown = e => { const c = e.target.closest('.pcard'); if(c && e.key === 'Enter') selectPlayer(c.dataset.id); };
+$('#avatarGrid').onclick = e => { const b = e.target.closest('[data-av]'); if(!b) return; ac(); sfx.coin(); newAvatar = b.dataset.av; renderWho(); };
+$('#pCreate').onclick = createPlayer;
+$('#pName').onkeydown = e => { if(e.key === 'Enter') createPlayer(); };
+$('#pCancel').onclick = () => { $('#whoNew').hidden = true; $('#whoPick').hidden = false; };
 
 /* ================= Input & loop ================= */
 window.addEventListener('keydown', e => {
@@ -1558,6 +1771,7 @@ function loop(t){
 requestAnimationFrame(loop);
 
 applyLang();
+showWho();
 if(document.fonts && document.fonts.load) document.fonts.load(`16px ${PXFONT}`).catch(() => {});
 </script>
 </body>
