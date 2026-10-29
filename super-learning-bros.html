@@ -1,0 +1,1564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Learning Bros.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#5c94fc; --ink:#1a1a1a; --red:#e52521; --gold:#f8b800; --brick:#c84c0c;
+  --green:#00a800; --card:#fff8e7; --px:'Press Start 2P', ui-monospace, Menlo, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--sky); color:var(--ink); min-height:100vh;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-user-select:none; user-select:none;
+}
+.px{font-family:var(--px)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;max-width:1000px;margin:0 auto}
+h1{font-family:var(--px);font-size:clamp(13px,3vw,24px);color:#fff;text-shadow:3px 3px 0 #000;margin:0;line-height:1.4}
+h1 span{color:var(--gold)}
+h2{font-family:var(--px);font-size:15px;margin:0 0 14px;line-height:1.5}
+.btn{
+  font-family:var(--px);font-size:11px;line-height:1.3;background:#fff;color:#000;border:3px solid #000;
+  box-shadow:4px 4px 0 #000;padding:10px 12px;cursor:pointer;
+}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+.btn.primary{background:var(--gold)}
+.btn.sel{background:var(--red);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:0 16px 40px}
+.panel{background:var(--card);border:4px solid #000;box-shadow:6px 6px 0 rgba(0,0,0,.35);padding:16px;margin-bottom:18px}
+
+/* ---- Menu ---- */
+.skills{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.skill{
+  background:#fff;border:4px solid #000;box-shadow:4px 4px 0 #000;padding:14px 10px;cursor:pointer;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:10px;font:inherit;color:inherit;
+}
+.skill:hover{transform:translateY(-3px)}
+.skill.sel{background:#ffe9a8}
+.qblock{
+  width:58px;height:58px;background:#f8a820;border:3px solid #000;display:grid;place-items:center;
+  font-family:var(--px);font-size:18px;color:#fff;text-shadow:2px 2px 0 #6b2c00;position:relative;
+  box-shadow:inset 3px 3px 0 #fcd890, inset -3px -3px 0 #c06000;
+}
+.skill b{font-family:var(--px);font-size:11px;line-height:1.5}
+.skill small{color:#555;font-size:13px}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.lvl{
+  background:#fff;border:3px solid #000;box-shadow:3px 3px 0 #000;padding:10px;cursor:pointer;text-align:left;
+  display:flex;gap:10px;align-items:center;font:inherit;color:inherit;
+}
+.lvl .qblock{width:40px;height:40px;font-size:12px;flex:none}
+.lvl .nm{font-size:14px;font-weight:600;line-height:1.25}
+.lvl .st{color:#e8a000;font-size:14px;letter-spacing:1px}
+.lvl.locked{opacity:.45;cursor:not-allowed}
+.lvl.locked .qblock{background:#999;box-shadow:none}
+.opts{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:center}
+.opt{display:flex;flex-direction:column;gap:8px}
+.opt>span{font-family:var(--px);font-size:10px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg .btn{font-size:10px;padding:8px 10px;box-shadow:3px 3px 0 #000}
+label.chk{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.ground{height:48px;background:
+  linear-gradient(#000 0 0) 0 0/100% 3px no-repeat,
+  repeating-linear-gradient(90deg,transparent 0 38px,#000 38px 40px),
+  linear-gradient(#c84c0c,#c84c0c);
+  margin-top:28px;border-top:3px solid #000}
+
+/* ---- Game ---- */
+#game{max-width:1000px;margin:0 auto;padding:0 16px 30px}
+.gamebar{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
+.gamebar .title{font-family:var(--px);color:#fff;text-shadow:2px 2px 0 #000;font-size:clamp(10px,2vw,14px);line-height:1.5}
+#prompt{min-height:86px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:14px 18px;margin-bottom:12px}
+.strip{font-family:var(--px);font-size:clamp(14px,2.6vw,24px);line-height:1.9;text-align:center;word-break:break-word}
+.strip span{padding:2px 1px;border-bottom:4px solid transparent}
+.strip .ok{color:var(--green)}
+.strip .fix{color:#e07000}
+.strip .miss{color:var(--red);text-decoration:line-through}
+.strip .cur{background:var(--gold);border-bottom-color:#000;animation:blink 1s steps(2) infinite}
+.strip .sp{display:inline-block;min-width:.8em}
+@keyframes blink{50%{background:#ffe9a8}}
+.math{font-family:var(--px);font-size:clamp(26px,6vw,46px);display:flex;align-items:center;gap:.4em;flex-wrap:wrap;justify-content:center}
+.vert{display:inline-grid;justify-items:end;font-family:var(--px);font-size:clamp(26px,6vw,46px);line-height:1.35}
+.vert .line{width:100%;border-top:5px solid #000;margin:4px 0 8px}
+.vert .op{margin-right:.5em}
+.ans{min-width:2.4em;padding:6px 10px;border:4px solid #000;background:#fff;text-align:right;display:inline-block;min-height:1.6em}
+.ans.bad{background:#ffb3b3;animation:shake .3s}
+.ans .caret{display:inline-block;width:.12em;height:1em;background:#000;vertical-align:-0.1em;animation:blink2 1s steps(2) infinite;margin-left:2px}
+@keyframes blink2{50%{opacity:0}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.subline{font-size:14px;margin-top:10px;color:#444;text-align:center}
+.subline b{color:var(--red)}
+.stage{position:relative;border:4px solid #000;box-shadow:6px 6px 0 rgba(0,0,0,.35);background:#000;line-height:0}
+canvas{width:100%;height:auto;display:block;image-rendering:pixelated}
+#hint{font-family:var(--px);font-size:11px;color:#fff;text-shadow:2px 2px 0 #000;text-align:center;margin:14px 0 4px;line-height:1.8;min-height:20px}
+#hint .dot{display:inline-block;width:12px;height:12px;border:2px solid #000;vertical-align:-1px;margin-right:6px}
+
+/* results */
+#results{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);line-height:normal;padding:12px}
+#results[hidden]{display:none}
+.res{background:var(--card);border:4px solid #000;box-shadow:6px 6px 0 #000;padding:18px 22px;text-align:center;max-width:440px;width:100%}
+.res .stars{font-size:40px;color:#e8a000;letter-spacing:6px;text-shadow:2px 2px 0 #000;margin:4px 0 10px}
+.res .stars .off{color:#ccc}
+.res table{margin:0 auto 14px;border-collapse:collapse;font-size:15px}
+.res td{padding:3px 10px;text-align:left}
+.res td:last-child{font-weight:700;text-align:right}
+.res .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* keyboard */
+#kbd{background:#2b2b2b;border:4px solid #000;border-radius:10px;padding:10px;margin-top:8px;display:flex;flex-direction:column;gap:5px;--u:min(5.6vw,56px)}
+.krow{display:flex;gap:5px;justify-content:center}
+.key{
+  width:var(--u);height:calc(var(--u)*.9);border-radius:6px;border:2px solid #000;display:grid;place-items:center;
+  font-family:var(--px);font-size:calc(var(--u)*.24);color:#111;cursor:pointer;position:relative;
+  box-shadow:0 3px 0 #000;transition:transform .05s;
+}
+.key.f0,.key.f7{background:#ffbfd2}
+.key.f1,.key.f6{background:#ffd9a3}
+.key.f2,.key.f5{background:#c1f0b0}
+.key.f3,.key.f4{background:#b3dcff}
+.key.thumb{background:#e4e4e4}
+.key.deco{background:#8a8a8a;color:#222;cursor:default;font-size:calc(var(--u)*.17)}
+.key.home::after{content:"";position:absolute;bottom:18%;width:30%;height:3px;background:#000;border-radius:2px}
+.key.next{background:var(--gold)!important;outline:4px solid var(--red);transform:translateY(-3px);animation:pulse .8s infinite alternate;z-index:1}
+.key.bad{background:#ff6b6b!important}
+.key.press{transform:translateY(2px);box-shadow:0 1px 0 #000}
+@keyframes pulse{to{outline-color:#fff}}
+#numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:320px;margin:10px auto 0}
+#numpad button{font-family:var(--px);font-size:20px;padding:14px 0;background:#fff;border:3px solid #000;box-shadow:3px 3px 0 #000;cursor:pointer;color:#000}
+#numpad button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+#numpad .ok{background:var(--green);color:#fff}
+#numpad .del{background:#ffd9a3}
+/* learn */
+#learn{max-width:1000px;margin:0 auto;padding:0 16px 30px}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.tabs .btn{font-size:12px}
+.say{padding:14px 18px;margin-bottom:12px;min-height:150px;display:flex;flex-direction:column;justify-content:center}
+#lSay{font-size:clamp(20px,3.4vw,30px);font-weight:800;text-align:center;line-height:1.3}
+#lEq{font-family:var(--px);font-size:clamp(22px,5vw,40px);text-align:center;margin-top:14px;line-height:1.5}
+#lEq .line2{font-size:.5em;color:#444;margin-top:6px}
+.cR{color:var(--gold);text-shadow:3px 3px 0 #000}
+.cQ{display:inline-block;border:4px dashed #999;color:#999;padding:0 .25em;line-height:1.2}
+.lctrl{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;gap:16px 28px;margin-top:16px}
+.stepper{display:flex;flex-direction:column;align-items:center;gap:8px}
+.slabel{font-weight:800;font-size:16px;display:flex;align-items:center;gap:6px}
+.slabel i{width:16px;height:16px;border:2px solid #000;display:inline-block}
+.srow{display:flex;align-items:center;gap:10px}
+.srow .btn{font-size:18px;padding:8px 14px}
+.qblock.big{width:70px;height:70px;font-size:24px}
+.opsign{font-family:var(--px);font-size:34px;padding-bottom:18px}
+.lbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn.big{font-size:14px;padding:14px 18px}
+.hbtns{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.hbtns .seg .btn{font-size:10px;padding:8px 10px;box-shadow:3px 3px 0 #000}
+.skill img{width:58px;height:58px;image-rendering:pixelated;object-fit:contain}
+[hidden]{display:none!important}
+@media (max-width:600px){
+  #kbd{padding:6px;gap:3px}
+  .krow{gap:3px}
+  .key.deco.wide{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 data-i18n-html="brand"></h1>
+  <div class="hbtns"><div class="seg" id="langSeg"></div><button class="btn" id="soundBtn">♪</button></div>
+</header>
+
+<main id="menu">
+  <section class="panel">
+    <h2 data-i18n="learnHead"></h2>
+    <div class="skills" id="learnCards"></div>
+  </section>
+  <section class="panel">
+    <h2 data-i18n="practiceHead"></h2>
+    <div class="skills" id="skills"></div>
+  </section>
+  <section class="panel" id="levelPanel" hidden>
+    <h2 id="levelTitle">Pick a level</h2>
+    <div class="levels" id="levels"></div>
+  </section>
+  <section class="panel">
+    <h2 data-i18n="optionsHead"></h2>
+    <div class="opts">
+      <div class="opt"><span data-i18n="pace"></span><div class="seg" id="paceSeg"></div></div>
+      <div class="opt"><span data-i18n="keyboard"></span><div class="seg" id="layoutSeg"></div></div>
+      <label class="chk"><input type="checkbox" id="freePlay"> <span data-i18n="freePlay"></span></label>
+    </div>
+  </section>
+  <div class="ground"></div>
+</main>
+
+<section id="game" hidden>
+  <div class="gamebar">
+    <button class="btn" id="quitBtn" data-i18n="backLevels"></button>
+    <div class="title" id="gameTitle"></div>
+    <button class="btn" id="restartBtn" data-i18n="restart"></button>
+  </div>
+  <div class="panel" id="prompt"></div>
+  <div class="stage">
+    <canvas id="cv" width="960" height="400"></canvas>
+    <div id="results" hidden></div>
+  </div>
+  <div id="hint"></div>
+  <div id="kbd" hidden></div>
+  <div id="numpad" hidden></div>
+</section>
+
+<section id="learn" hidden>
+  <div class="gamebar">
+    <button class="btn" id="learnBack" data-i18n="backMenu"></button>
+    <div class="title" data-i18n="howWorks"></div>
+    <button class="btn" id="voiceBtn"></button>
+  </div>
+  <div class="tabs" id="learnTabs"></div>
+  <div class="panel say"><div id="lSay"></div><div id="lEq"></div></div>
+  <div class="stage"><canvas id="lcv" width="960" height="480"></canvas></div>
+  <div class="panel lctrl" id="learnCtrl"></div>
+</section>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const randInt = (a, b) => a + rnd(b - a + 1);
+const pl = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+/* ================= Language (Hungarian / English) ================= */
+let lang = store.get('slb-lang', 'hu');
+const tx = (en, hu) => ({ en, hu });
+const tr = v => (v && typeof v === 'object' && 'hu' in v) ? v[lang] : v;
+function t(key, ...args){ const v = tr(S[key]); return typeof v === 'function' ? v(...args) : v; }
+const MUL = () => lang === 'hu' ? '·' : '×'; // Hungarian schools write multiplication as a dot
+// Hungarian suffixes: "3-szor" (3 times) and "hármasával" (counting by 3s)
+const HU_SZOR = ['', 'szer', 'szer', 'szor', 'szer', 'ször', 'szor', 'szer', 'szor', 'szer', 'szer'];
+const HU_BY = ['', 'egyesével', 'kettesével', 'hármasával', 'négyesével', 'ötösével', 'hatosával', 'hetesével', 'nyolcasával', 'kilencesével', 'tízesével'];
+const cap = s => s[0].toUpperCase() + s.slice(1);
+const S = {
+  title: tx('Super Learning Bros.', 'Szuper Tanuló Tesók'),
+  brand: tx('Super <span>Learning</span> Bros.', 'Szuper <span>Tanuló</span> Tesók'),
+  learnHead: tx('Learn: see how math works', 'Tanulj: így működik a matek'),
+  practiceHead: tx('Practice: pick a skill', 'Gyakorlás: válassz témát'),
+  pickLevel: tx(n => `Pick a level — ${n}`, n => `Válassz pályát — ${n}`),
+  optionsHead: tx('Options', 'Beállítások'),
+  pace: tx("Mario's pace", 'Mario tempója'),
+  keyboard: tx('Keyboard', 'Billentyűzet'),
+  freePlay: tx('Free play (open all levels)', 'Szabad játék (minden pálya nyitva)'),
+  relaxed: tx('Relaxed (waits)', 'Nyugis (vár)'), running: tx('Running', 'Fut'), runningFast: tx('Running fast', 'Gyorsan fut'),
+  soundOn: tx('♪ ON', '♪ BE'), soundOff: tx('♪ OFF', '♪ KI'),
+  backLevels: tx('◀ Levels', '◀ Pályák'), restart: tx('↻ Restart', '↻ Újra'),
+  backMenu: tx('◀ Menu', '◀ Menü'), howWorks: tx('How does it work?', 'Hogyan működik?'),
+  voiceOn: tx('Voice ON', 'Felolvasás BE'), voiceOff: tx('Voice OFF', 'Felolvasás KI'),
+  gameTitle: tx((s, n, l) => `${s} · Level ${n}: ${l}`, (s, n, l) => `${s} · ${n}. pálya: ${l}`),
+  // canvas HUD
+  score: tx('SCORE', 'PONT'), level: tx('LEVEL', 'PÁLYA'), time: tx('TIME', 'IDŐ'),
+  ready: tx('GET READY!', 'VIGYÁZZ!'), go: tx('GO!', 'RAJT!'), miss: tx('MISS', 'HOPP'),
+  typeLetter: tx('Type the letter in the block!', 'Írd be a dobozban lévő betűt!'),
+  typeAnswer: tx('Type the answer!', 'Írd be az eredményt!'),
+  // prompt panel & hints
+  wellDone: tx('⭐ Well done! ⭐', '⭐ Ügyes vagy! ⭐'),
+  hintAns: tx(a => `Hint: the answer is <b>${a}</b> — type it in!`, a => `Segítség: az eredmény <b>${a}</b> — írd be!`),
+  notQuite: tx('Not quite — try again!', 'Majdnem — próbáld újra!'),
+  problemOf: tx((i, n) => `Problem ${i} of ${n}`, (i, n) => `${i}. feladat (összesen ${n})`),
+  mathHint: tx('Type the answer · Backspace fixes · Enter checks · Esc = menu', 'Írd be az eredményt · Backspace: javítás · Enter: ellenőrzés · Esc: menü'),
+  pressSpace: tx('Press SPACE with your thumb', 'Nyomd meg a SZÓKÖZT a hüvelykujjaddal'),
+  useFinger: tx(f => `Use your ${f}`, f => `Használd a ${f}`),
+  fingers: tx(['left pinky','left ring finger','left middle finger','left index finger','right index finger','right middle finger','right ring finger','right pinky'],
+              ['bal kisujjad','bal gyűrűsujjad','bal középső ujjad','bal mutatóujjad','jobb mutatóujjad','jobb középső ujjad','jobb gyűrűsujjad','jobb kisujjad']),
+  shiftSide: tx(r => r ? 'RIGHT SHIFT' : 'LEFT SHIFT', r => r ? 'JOBB SHIFT' : 'BAL SHIFT'),
+  typeChar: tx(c => `Type "${c}"`, c => `Írd be: „${c}”`),
+  // results
+  perfect: tx('PERFECT!', 'TÖKÉLETES!'), clear: tx('COURSE CLEAR!', 'PÁLYA KÉSZ!'), keepPracticing: tx('KEEP PRACTICING!', 'GYAKOROLJ MÉG!'),
+  accuracy: tx('Accuracy', 'Pontosság'), speed: tx('Speed', 'Sebesség'), wpm: tx('WPM', 'szó/perc'),
+  mistakes: tx('Mistakes', 'Hibák'), timeLbl: tx('Time', 'Idő'), sec: tx('s', 'mp'),
+  firstTry: tx('Right first try', 'Elsőre jó'), perProblem: tx('Time per problem', 'Idő feladatonként'),
+  totalTime: tx('Total time', 'Teljes idő'), missedBlocks: tx('Missed blocks', 'Kihagyott dobozok'), scoreLbl: tx('Score', 'Pontszám'),
+  nextUnlocked: tx('Next level unlocked!', 'Megnyílt a következő pálya!'),
+  allDone: tx('You finished every level here!', 'Itt minden pályát teljesítettél!'),
+  need70: tx('Get 70% or better to unlock the next level.', 'Érj el legalább 70%-ot a következő pályához!'),
+  next: tx('Next ▶', 'Tovább ▶'), again: tx('Play again', 'Újra'), levels: tx('Levels', 'Pályák'),
+  // learn screen
+  showMe: tx('▶ Show me!', '▶ Mutasd!'), newNums: tx('New numbers', 'Új számok'),
+  pressShow: tx('Press "Show me!" to watch.', 'Nyomd meg a „Mutasd!” gombot!'),
+  addIntro: tx((a, b) => `What is ${a} plus ${b}? Let's find out!`, (a, b) => `Mennyi ${a} plusz ${b}? Nézzük meg!`),
+  addFirst: tx(a => `Mario jumps, and the block gives ${pl(a, 'red mushroom')}.`, a => `Mario ugrik, és a dobozból ${a} piros gomba jön elő.`),
+  thatsN: tx(n => `That's ${n}!`, n => `Ez ${n}!`),
+  addMore: tx(b => `Now ${b} more. This time ${b === 1 ? 'it is' : 'they are'} green!`, b => `Most jön még ${b} gomba, ${b === 1 ? 'ez zöld' : 'ezek zöldek'}!`),
+  addZero: tx('Then Mario gets 0 green mushrooms. None at all!', 'Zöld gomba most nem jön. Egy sem, vagyis nulla!'),
+  together: tx("Let's put them all together and count them!", 'Tegyük őket egy helyre, és számoljuk meg mindet!'),
+  tenMore: tx((r, n) => `Look! A full row of 10, and ${r} more. That makes ${n}.`, (r, n) => `Nézd! Egy teli sor 10, és még ${r}. Ez összesen ${n}.`),
+  addEnd: tx((a, b, n) => `${a} plus ${b} equals ${n}!`, (a, b, n) => `${a} plusz ${b} egyenlő ${n}!`),
+  subIntro: tx((a, b) => `What is ${a} take away ${b}? Let's find out!`, (a, b) => `Mennyi ${a} mínusz ${b}? Nézzük meg!`),
+  subCome: tx(a => `Here come ${pl(a, 'Goomba')}!`, a => `Jön ${a} Goomba!`),
+  subStomp: tx(b => `Mario stomps ${b} of them. Watch!`, b => `Mario rátapos ${b} Goombára. Figyeld!`),
+  subGone: tx(b => `${pl(b, 'Goomba')} ${b === 1 ? 'is' : 'are'} squished and taken away.`, b => `${b} Goomba kilapult, ${b === 1 ? 'őt' : 'őket'} elvettük.`),
+  subNone: tx("Mario doesn't stomp any. Nothing is taken away!", 'Mario most egyikre sem tapos rá. Semmit sem veszünk el!'),
+  subLeft: tx("How many Goombas are left? Let's count!", 'Hány Goomba maradt? Számoljuk meg!'),
+  subZero: tx("None are left! That's zero.", 'Egy sem maradt! Ez nulla.'),
+  subEnd: tx((a, b, n) => `${a} take away ${b} equals ${n}!`, (a, b, n) => `${a} mínusz ${b} egyenlő ${n}!`),
+  mulIntro: tx((a, b) => `${a} times ${b} means ${pl(a, 'group')} of ${b}. Let's see!`, (a, b) => `${a}-${HU_SZOR[a]} ${b} azt jelenti: ${a} csoport, mindegyikben ${b} érme. Nézzük!`),
+  mulFirst: tx(b => `Here is the first group: ${pl(b, 'coin')}.`, b => `Itt az első csoport: ${b} érme.`),
+  mulAnother: tx(b => `Here is another group of ${b}!`, b => `Itt egy újabb csoport, ebben is ${b} érme!`),
+  mulGroupN: tx((i, b) => `Group ${i}: ${b} more!`, (i, b) => `${i}. csoport: még ${b}!`),
+  mulCounted: tx((b, list) => `We counted by ${b}s: ${list}!`, (b, list) => `${cap(HU_BY[b])} számoltunk: ${list}!`),
+  mulEnd: tx((a, b, n) => `${a} times ${b} equals ${n}!`, (a, b, n) => `${a}-${HU_SZOR[a]} ${b} egyenlő ${n}!`),
+};
+
+/* ================= Sound (Web Audio, no files) ================= */
+let actx = null, muted = store.get('slb-muted', false);
+function ac(){
+  if(!actx){ try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+  if(actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur, type='square', vol=0.06, when=0, slideTo=null){
+  if(muted) return; const a = ac(); if(!a) return;
+  const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+const sfx = {
+  jump(){ tone(250, 0.18, 'square', 0.04, 0, 640); },
+  coin(){ tone(988, 0.07, 'square', 0.05); tone(1319, 0.3, 'square', 0.05, 0.07); },
+  error(){ tone(150, 0.22, 'sawtooth', 0.06, 0, 90); },
+  key(){ tone(700, 0.03, 'square', 0.02); },
+  miss(){ tone(400, 0.3, 'triangle', 0.08, 0, 110); },
+  go(){ tone(523, 0.1, 'square', 0.05); tone(784, 0.2, 'square', 0.05, 0.1); },
+  beep(){ tone(440, 0.1, 'square', 0.04); },
+  pop(){ tone(330, 0.14, 'square', 0.045, 0, 880); },
+  stomp(){ tone(220, 0.12, 'square', 0.06, 0, 70); },
+  count(n){ tone(440 * 2 ** ((n % 13) / 12), 0.09, 'square', 0.035); },
+  flag(){ [523,659,784,1047,880,1047,1319].forEach((f,i) => tone(f, 0.15, 'square', 0.045, i * 0.11)); }
+};
+
+/* ================= Keyboard layouts ================= */
+// Lessons are written with US key positions; `map` converts them for other layouts.
+const LAYOUTS = {
+  us: {
+    name: tx('US (QWERTY)', 'Amerikai (QWERTY)'),
+    rows: ["`1234567890-=", "qwertyuiop[]", "asdfghjkl;'", "zxcvbnm,./"],
+    fing: ["0012334456777", "012334456777", "01233445677", "0123344567"],
+    map: {},
+    words: {
+      home: ["ask","dad","sad","lad","fall","all","glad","flag","hall","gas","has","had","lash","dash","flash","salad","add","alas","shall","flask"],
+      top: ["the","tree","write","your","out","list","high","keep","sleep","fish","water","door","food","pretty","sugar","sheep","frog","goat","hat","dog","kite","rope","trip","help","jelly","party","quiet","ship","shoe"],
+      common: ["the","and","you","for","are","with","was","they","this","have","from","one","word","but","not","what","all","were","when","your","can","said","there","use","each","which","she","how","many","then","them","some","her","make","like","him","into","time","look","two","more","see","number","way","could","people","water","been","call","who","now","find","long","down","day","come","made","may","part","jump","box","zoo","lazy","quick","fox"],
+      caps: ["Sam","Ann","Tom","Max","Lily","Ben","Zoe","Kim","Pat","Rex","Ivy","Jack","Emma","Leo","Mia","Noah","Ella","Gus","Olive","Finn","Mario","Luigi","Peach","Yoshi"],
+      sentences: ["The cat sat on the mat.","I like to read books.","The sun is hot today.","We can jump and run.","My dog likes to play.","A frog sat on a log.","Mario jumps on a block.","The quick brown fox jumps.","I see a big red bus.","Fish swim in the sea.","Birds can fly high.","We eat lunch at noon."]
+    }
+  },
+  hu: {
+    name: tx('Hungarian (QWERTZ)', 'Magyar (QWERTZ)'),
+    rows: ["0123456789öüó", "qwertzuiopőú", "asdfghjkléáű", "íyxcvbnm,.-"],
+    fing: ["0012334456777", "012334456777", "012334456777", "00123344567"],
+    map: { y:'z', z:'y', ';':'é', '/':'-' },
+    words: {
+      home: ["fa","hal","dal","fal","lak","kaja","adja","ha","ad","jaj","kád","sál","fák","halk","hadd","fáj"],
+      top: ["tej","ház","kert","fut","eper","tető","rét","ide","ruha","fekete","iskola","torta","piros","szeret","erdő","apa","papa","kép","kés","fiú","játék","tészta","fazék","haza","pizza","őz","út"],
+      common: ["a","az","és","egy","nem","hogy","van","meg","de","ez","már","csak","kutya","macska","alma","víz","barát","szép","nagy","kicsi","piros","kék","zöld","nap","hold","virág","labda","anya","apa","ház","iskola","könyv","cica","mókus","nyúl"],
+      caps: ["Anna","Bence","Csilla","Dani","Eszter","Feri","Gábor","Hanna","Ildi","Jani","Kata","Laci","Máté","Nóra","Olivér","Péter","Réka","Sanyi","Tomi","Zsófi","Mario","Luigi"],
+      sentences: ["A kutya ugat.","Ma szép idő van.","Szeretem az almát.","A macska alszik.","Anna piros labdát kapott.","A nap süt az égen.","Péter gyorsan fut.","Mario ugrik egyet.","A hal úszik a vízben.","Ma iskolába megyek.","A cica tejet iszik.","Az erdőben fák vannak."]
+    }
+  }
+};
+const FCOLORS = ['#ffbfd2','#ffd9a3','#c1f0b0','#b3dcff','#b3dcff','#c1f0b0','#ffd9a3','#ffbfd2'];
+
+const H = 'asdfghjkl;', HT = H + 'eirutywoqp';
+const LESSONS = [
+  ['drill','fj','fj'], ['drill','fjdk','dk'], ['drill','fjdksl','sl'], ['drill','asdfjkl;','a;'], ['drill',H,'gh'],
+  ['words','home',tx('Home Row Words', 'Alapsor szavai')],
+  ['drill',H+'ei','ei'], ['drill',H+'eiru','ru'], ['drill',H+'eiruty','ty'], ['drill',H+'eirutywo','wo'], ['drill',HT,'qp'],
+  ['words','top',tx('Top Row Words', 'Felső sor szavai')],
+  ['drill',HT+'vm','vm'], ['drill',HT+'vmbn','bn'], ['drill',HT+'vmbnc,','c,'], ['drill',HT+'vmbnc,x.','x.'], ['drill',HT+'vmbnc,x.z/','z/'],
+  ['words','common',tx('Common Words', 'Gyakori szavak')],
+  ['drill','12345','12345'], ['drill','67890','67890'],
+  ['words','caps',tx('Capital Letters', 'Nagybetűk')],
+  ['sentence','sentences',tx('Sentences', 'Mondatok')]
+];
+
+function keyDrill(keys, fresh, len = 26){
+  let out = '';
+  while(out.length < len){
+    let w = ''; const n = randInt(2, 4);
+    for(let i = 0; i < n; i++) w += Math.random() < 0.55 ? pick(fresh) : pick(keys);
+    out += (out ? ' ' : '') + w;
+  }
+  return out.slice(0, len).trim();
+}
+function wordDrill(words, len = 30){
+  let out = '', prev = '';
+  while(out.length < len){
+    let w = pick(words); if(w === prev && words.length > 1) continue;
+    prev = w; out += (out ? ' ' : '') + w;
+  }
+  return out;
+}
+const textItems = s => [...s].map(ch => ({ label: ch === ' ' ? '␣' : ch, answer: ch }));
+
+function typingLevels(layoutId){
+  const lay = LAYOUTS[layoutId], m = c => lay.map[c] || c;
+  return LESSONS.map(L => {
+    if(L[0] === 'drill'){
+      const keys = [...L[1]].map(m), fresh = [...L[2]].map(m);
+      const first = fresh[0], last = fresh[fresh.length - 1], up = fresh.map(c => c.toUpperCase());
+      const name = /\d/.test(first)
+        ? tx(`Numbers ${first} to ${last}`, `Számok ${first}–${last}`)
+        : tx(up.join(' and '), up.join(' és '));
+      return { name: tr(name), gen: () => textItems(keyDrill(keys, fresh)) };
+    }
+    if(L[0] === 'words') return { name: tr(L[2]), gen: () => textItems(wordDrill(lay.words[L[1]])) };
+    return { name: tr(L[2]), gen: () => {
+      const s = lay.words.sentences, a = pick(s); let b = pick(s); while(b === a) b = pick(s);
+      return textItems(a + ' ' + b);
+    }};
+  });
+}
+
+/* ================= Math problem generators ================= */
+const addItem = (a, b) => ({ label: `${a}+${b}`, a: String(a), b: String(b), op: '+', answer: String(a + b) });
+const mulItem = (a, b) => ({ label: `${a}${MUL()}${b}`, a: String(a), b: String(b), op: MUL(), answer: String(a * b) });
+function rounds(fn, n = 10){
+  const items = [], seen = new Set(); let guard = 0;
+  while(items.length < n){
+    const it = fn();
+    if(seen.has(it.label) && guard++ < 300) continue;
+    seen.add(it.label); items.push(it);
+  }
+  return items;
+}
+function hasCarry(a, b){ while(a || b){ if(a % 10 + b % 10 > 9) return true; a = Math.floor(a / 10); b = Math.floor(b / 10); } return false; }
+function addDigits(d, carry){
+  const lo = 10 ** (d - 1), hi = 10 ** d - 1;
+  for(;;){ const a = randInt(lo, hi), b = randInt(lo, hi); if(hasCarry(a, b) === carry) return addItem(a, b); }
+}
+const subItem = (a, b) => ({ label: `${a}-${b}`, a: String(a), b: String(b), op: '-', answer: String(a - b) });
+function hasBorrow(a, b){ while(b){ if(a % 10 < b % 10) return true; a = Math.floor(a / 10); b = Math.floor(b / 10); } return false; }
+function subDigits(d, borrow){
+  const lo = 10 ** (d - 1), hi = 10 ** d - 1;
+  for(;;){ const a = randInt(lo + 1, hi), b = randInt(lo, a - 1); if(hasBorrow(a, b) === borrow) return subItem(a, b); }
+}
+function tables(list, maxB = 9){
+  return () => { const a = pick(list), b = randInt(1, maxB); return Math.random() < 0.5 ? mulItem(a, b) : mulItem(b, a); };
+}
+
+const SKILLS = [
+  { id:'typing', name:tx('Typing', 'Gépelés'), sub:tx('Learn the keyboard', 'Ismerd meg a billentyűzetet'), icon:'A', kind:'type', runSecs:[1.5, 0.85] },
+  { id:'add1', name:tx('Adding 1-digit', 'Egyjegyű összeadás'), sub:'3 + 5', icon:'+', kind:'math', runSecs:[6, 3.5], levels:[
+    { name:tx('Sums up to 5', 'Összeg 5-ig'),   gen:() => rounds(() => { let a, b; do{ a = randInt(0, 5); b = randInt(0, 5 - a); }while(a + b === 0); return addItem(a, b); }) },
+    { name:tx('Sums up to 10', 'Összeg 10-ig'), gen:() => rounds(() => { const a = randInt(1, 9); return addItem(a, randInt(1, 10 - a)); }) },
+    { name:tx('Doubles', 'Duplázás'),           gen:() => rounds(() => { const a = randInt(1, 9); return addItem(a, a); }, 9) },
+    { name:tx('Sums up to 18', 'Összeg 18-ig'), gen:() => rounds(() => addItem(randInt(1, 9), randInt(1, 9))) },
+  ]},
+  { id:'add2', name:tx('Adding 2-digit', 'Kétjegyű összeadás'), sub:'23 + 45', icon:'++', kind:'math', runSecs:[10, 6], levels:[
+    { name:tx('Tens only', 'Csak tízesek'),     gen:() => rounds(() => { const a = randInt(1, 8); return addItem(a * 10, randInt(1, 9 - a) * 10); }) },
+    { name:tx('2-digit + 1-digit', 'Kétjegyű + egyjegyű'), gen:() => rounds(() => { const a = randInt(10, 89); return addItem(a, randInt(1, 9)); }) },
+    { name:tx('No carrying', 'Tízesátlépés nélkül'), gen:() => rounds(() => addDigits(2, false)) },
+    { name:tx('With carrying', 'Tízesátlépéssel'),   gen:() => rounds(() => addDigits(2, true)) },
+  ]},
+  { id:'add3', name:tx('Adding 3-digit', 'Háromjegyű összeadás'), sub:'123 + 456', icon:'+++', kind:'math', runSecs:[15, 9], levels:[
+    { name:tx('Round numbers', 'Kerek számok'), gen:() => rounds(() => addItem(randInt(10, 99) * 10, randInt(10, 99) * 10)) },
+    { name:tx('No carrying', 'Átvitel nélkül'), gen:() => rounds(() => addDigits(3, false)) },
+    { name:tx('With carrying', 'Átvitellel'),   gen:() => rounds(() => addDigits(3, true)) },
+  ]},
+  { id:'sub1', name:tx('Subtracting 1-digit', 'Egyjegyű kivonás'), sub:'8 - 3', icon:'-', kind:'math', runSecs:[6, 3.5], levels:[
+    { name:tx('Within 5', '5-ön belül'),    gen:() => rounds(() => { const a = randInt(1, 5); return subItem(a, randInt(0, a)); }) },
+    { name:tx('Within 10', '10-en belül'),  gen:() => rounds(() => { const a = randInt(2, 10); return subItem(a, randInt(1, a)); }) },
+    { name:tx('Halves', 'Felezés'),         gen:() => rounds(() => { const a = randInt(1, 9); return subItem(a * 2, a); }, 9) },
+    { name:tx('Within 18', '18-on belül'),  gen:() => rounds(() => { const x = randInt(1, 9), y = randInt(1, 9); return subItem(x + y, x); }) },
+  ]},
+  { id:'sub2', name:tx('Subtracting 2-digit', 'Kétjegyű kivonás'), sub:'68 - 45', icon:'--', kind:'math', runSecs:[10, 6], levels:[
+    { name:tx('Tens only', 'Csak tízesek'), gen:() => rounds(() => { const a = randInt(2, 9); return subItem(a * 10, randInt(1, a - 1) * 10); }) },
+    { name:tx('2-digit - 1-digit', 'Kétjegyű - egyjegyű'), gen:() => rounds(() => subItem(randInt(10, 99), randInt(1, 9))) },
+    { name:tx('No borrowing', 'Tízesátlépés nélkül'), gen:() => rounds(() => subDigits(2, false)) },
+    { name:tx('With borrowing', 'Tízesátlépéssel'),   gen:() => rounds(() => subDigits(2, true)) },
+  ]},
+  { id:'sub3', name:tx('Subtracting 3-digit', 'Háromjegyű kivonás'), sub:'579 - 123', icon:'---', kind:'math', runSecs:[15, 9], levels:[
+    { name:tx('Round numbers', 'Kerek számok'), gen:() => rounds(() => { const a = randInt(20, 99); return subItem(a * 10, randInt(10, a - 1) * 10); }) },
+    { name:tx('No borrowing', 'Átlépés nélkül'), gen:() => rounds(() => subDigits(3, false)) },
+    { name:tx('With borrowing', 'Átlépéssel'),   gen:() => rounds(() => subDigits(3, true)) },
+  ]},
+  { id:'mul', name:tx('Multiplication', 'Szorzás'), sub:tx('7 × 8', '7 · 8'), icon:tx('×', '·'), kind:'math', runSecs:[7, 4], levels:[
+    { name:tx('Tables 1, 2, 5', '1-es, 2-es, 5-ös szorzótábla'), gen:() => rounds(tables([1, 2, 5])) },
+    { name:tx('Tables 3 and 4', '3-as és 4-es szorzótábla'),     gen:() => rounds(tables([3, 4])) },
+    { name:tx('Tables 6 and 7', '6-os és 7-es szorzótábla'),     gen:() => rounds(tables([6, 7])) },
+    { name:tx('Tables 8 and 9', '8-as és 9-es szorzótábla'),     gen:() => rounds(tables([8, 9])) },
+    { name:tx('All tables mixed', 'Vegyes szorzótábla'),         gen:() => rounds(() => mulItem(randInt(2, 9), randInt(2, 9)), 12) },
+  ]},
+];
+
+/* ================= Saved state ================= */
+let prog = store.get('slb-progress', {});
+let opts = Object.assign({ pace:'relaxed', layout:'hu', free:false }, store.get('slb-opts', {}));
+const saveOpts = () => store.set('slb-opts', opts);
+const levelsOf = sk => sk.kind === 'type' ? typingLevels(opts.layout) : sk.levels.map(l => ({ name: tr(l.name), gen: l.gen }));
+const starsOf = (sk, i) => (prog[sk.id] && prog[sk.id][i]) || 0;
+const unlocked = (sk, i) => opts.free || i === 0 || starsOf(sk, i - 1) >= 1;
+
+/* ================= Menu ================= */
+let menuSkill = null;
+function renderMenu(){
+  $('#skills').innerHTML = SKILLS.map(sk => {
+    const lv = levelsOf(sk), got = lv.reduce((s, _, i) => s + starsOf(sk, i), 0);
+    const icon = tr(sk.icon);
+    return `<button class="skill ${menuSkill === sk ? 'sel' : ''}" data-id="${sk.id}">
+      <div class="qblock" style="font-size:${icon.length > 2 ? 13 : 18}px">${esc(icon)}</div>
+      <b>${esc(tr(sk.name))}</b><small>${esc(tr(sk.sub))}</small><small style="color:#e8a000">★ ${got} / ${lv.length * 3}</small></button>`;
+  }).join('');
+  $('#levelPanel').hidden = !menuSkill;
+  if(menuSkill){
+    $('#levelTitle').textContent = t('pickLevel', tr(menuSkill.name));
+    $('#levels').innerHTML = levelsOf(menuSkill).map((l, i) => {
+      const ok = unlocked(menuSkill, i), s = starsOf(menuSkill, i);
+      return `<button class="lvl ${ok ? '' : 'locked'}" data-i="${i}" ${ok ? '' : 'disabled'}>
+        <div class="qblock">${ok ? i + 1 : '🔒'}</div>
+        <div><div class="nm">${esc(l.name)}</div><div class="st">${'★'.repeat(s)}<span style="color:#ccc">${'★'.repeat(3 - s)}</span></div></div></button>`;
+    }).join('');
+  }
+  const seg = (id, items, cur, key) => {
+    $(id).innerHTML = items.map(([v, t]) => `<button class="btn ${cur === v ? 'sel' : ''}" data-v="${v}">${t}</button>`).join('');
+    $(id).onclick = e => { const b = e.target.closest('button'); if(!b) return; opts[key] = b.dataset.v; saveOpts(); renderMenu(); };
+  };
+  seg('#paceSeg', [['relaxed', t('relaxed')], ['slow', t('running')], ['fast', t('runningFast')]], opts.pace, 'pace');
+  seg('#layoutSeg', Object.entries(LAYOUTS).map(([k, l]) => [k, tr(l.name)]), opts.layout, 'layout');
+  $('#freePlay').checked = opts.free;
+}
+// Fills every static [data-i18n] element, then redraws whatever screen is showing.
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  $('#langSeg').innerHTML = [['hu', 'Magyar'], ['en', 'English']]
+    .map(([k, n]) => `<button class="btn ${lang === k ? 'sel' : ''}" data-l="${k}">${n}</button>`).join('');
+  setSoundBtn(); setVoiceBtn(); renderLearnCards(); renderMenu();
+  if(screen === 'game' && G){
+    $('#gameTitle').textContent = t('gameTitle', tr(G.skill.name), G.li + 1, levelsOf(G.skill)[G.li].name);
+    renderPrompt(); renderHint();
+  } else if(screen === 'learn'){ renderLearnCtrl(); learnReset(); }
+}
+$('#langSeg').onclick = e => {
+  const b = e.target.closest('[data-l]'); if(!b || b.dataset.l === lang) return;
+  lang = b.dataset.l; store.set('slb-lang', lang); applyLang();
+};
+$('#skills').onclick = e => {
+  const b = e.target.closest('.skill'); if(!b) return;
+  ac(); menuSkill = SKILLS.find(s => s.id === b.dataset.id); renderMenu();
+  $('#levelPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+};
+$('#levels').onclick = e => {
+  const b = e.target.closest('.lvl'); if(!b || b.disabled) return;
+  ac(); startLevel(menuSkill, +b.dataset.i);
+};
+$('#freePlay').onchange = e => { opts.free = e.target.checked; saveOpts(); renderMenu(); };
+function setSoundBtn(){ $('#soundBtn').textContent = t(muted ? 'soundOff' : 'soundOn'); }
+$('#soundBtn').onclick = () => { muted = !muted; store.set('slb-muted', muted); setSoundBtn(); if(!muted) sfx.coin(); };
+
+/* ================= Canvas & sprites ================= */
+const cv = $('#cv');
+let ctx = cv.getContext('2d'); // drawing helpers use this; the Learn screen swaps in its own canvas
+const W = 960, HGT = 400, GY = 336, BLOCK_Y = 190, BH = 44, SC = 3, GRAV = 1900, JUMP_V = -560;
+const PAL = { R:'#e52521', S:'#fcb88c', H:'#6b3a12', B:'#2038ec', Y:'#f8d820', K:'#6b3a12' };
+const HEAD = [
+  "...RRRRR....",
+  "..RRRRRRRRR.",
+  "..HHHSSHS...",
+  ".HSHSSSHSSS.",
+  ".HSHHSSSHSSS",
+  ".HHSSSSHHHH.",
+  "...SSSSSSS..",
+];
+const BODY = [
+  "..RRBRRR....",
+  ".RRRBRRBRRR.",
+  "RRRRBBBBRRRR",
+  "SSRBYBBYBRSS",
+  "SSSBBBBBBSSS",
+  "SSBBBBBBBBSS",
+];
+const LEGS_A = ["..BBB..BBB..", ".KKK....KKK.", "KKKK....KKKK"];
+const LEGS_B = ["...BBBBBB...", "....KKKK....", "...KKKKK...."];
+const JUMP_BODY = [
+  "..RRBRRR..SS",
+  ".RRRBRRBRRSS",
+  "RRRRBBBBRR..",
+  "SSRBYBBYBR..",
+  "SSSBBBBBB...",
+  "SSBBBBBBBB..",
+  ".BBBB..BBBB.",
+  "KKK......KKK",
+  "KK........KK",
+];
+function sprite(rows, pal = PAL){
+  const c = document.createElement('canvas'); c.width = rows[0].length * SC; c.height = rows.length * SC;
+  const x = c.getContext('2d');
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if(pal[ch]){ x.fillStyle = pal[ch]; x.fillRect(i * SC, j * SC, SC, SC); } }));
+  return c;
+}
+const SPR = {
+  stand: sprite([...HEAD, ...BODY, ...LEGS_A]),
+  walk: sprite([...HEAD, ...BODY, ...LEGS_B]),
+  jump: sprite([...HEAD, ...JUMP_BODY]),
+};
+
+/* ================= Game ================= */
+let G = null, screen = 'menu', virtShift = false;
+const PXFONT = "'Press Start 2P', monospace";
+
+function startLevel(skill, li){
+  const levels = levelsOf(skill), lvl = levels[li];
+  const items = lvl.gen();
+  const font = skill.kind === 'type' ? `20px ${PXFONT}` : `15px ${PXFONT}`;
+  ctx.font = font;
+  const gap = skill.kind === 'type' ? 52 : 84;
+  let x = 0, prevW = 0;
+  const blocks = items.map((it, i) => {
+    const w = Math.max(44, Math.ceil(ctx.measureText(it.label).width) + 22);
+    if(i > 0) x += prevW / 2 + w / 2 + gap;
+    prevW = w;
+    return { ...it, x, w, y: BLOCK_Y, h: BH, answered:false, hit:false, missed:false, bump:0, shake:0, wrong:0 };
+  });
+  const run = opts.pace !== 'relaxed';
+  const span = blocks.length > 1 ? blocks[blocks.length - 1].x / (blocks.length - 1) : 100;
+  const speed = span / skill.runSecs[opts.pace === 'fast' ? 1 : 0];
+  const lead = run ? Math.max(170, speed * 2.5) : 300;
+  blocks.forEach(b => b.x += 120 + lead);
+  const lastX = blocks[blocks.length - 1].x;
+  G = {
+    skill, li, name: lvl.name, blocks, font, run, speed,
+    mario: { x:120, y:GY, vy:0, onGround:true, walking:false, anim:0, shake:0, hidden:false, jumpTarget:null },
+    buf:'', errors:0, firstTry:0, done:0, score:0, coins:0, parts:[], phase:'play',
+    countdown: run ? 3 : 0, goT: 0, startTime:null, endTime:null,
+    flagX: lastX + 260, castleX: lastX + 420, flagStage:0, flagDrop:0, flagT:0, time:0, ansBad:0
+  };
+  screen = 'game';
+  $('#menu').hidden = true; $('#game').hidden = false; $('#results').hidden = true;
+  $('#gameTitle').textContent = t('gameTitle', tr(skill.name), li + 1, lvl.name);
+  $('#kbd').hidden = skill.kind !== 'type';
+  $('#numpad').hidden = skill.kind !== 'math';
+  if(skill.kind === 'type') buildKbd();
+  if(document.activeElement) document.activeElement.blur();
+  window.scrollTo({ top: 0 });
+  if(run) sfx.beep();
+  renderPrompt(); renderHint();
+}
+
+const curBlock = () => G && G.blocks.find(b => !b.answered && !b.missed);
+const nextTarget = () => G && G.blocks.find(b => !b.hit && !b.missed);
+const now = () => performance.now();
+
+function onKey(key){
+  if(!G || G.phase !== 'play' || G.countdown > 0) return;
+  const b = curBlock(); if(!b) return;
+  if(!G.startTime) G.startTime = now();
+  if(G.skill.kind === 'type'){
+    if(key.length !== 1) return;
+    flashKey(key);
+    if(key === b.answer) answer(b); else wrong(b, key);
+  } else {
+    if(/^[0-9]$/.test(key)){
+      if(G.buf.length < 4) G.buf += key;
+      sfx.key();
+      if(G.buf.length >= b.answer.length) submit(b);
+    } else if(key === 'Backspace'){ G.buf = G.buf.slice(0, -1); }
+    else if(key === 'Enter'){ if(G.buf) submit(b); }
+  }
+  renderPrompt(); renderHint();
+}
+function submit(b){ if(G.buf === b.answer) answer(b); else wrong(b); }
+function answer(b){
+  b.answered = true; G.done++; G.buf = '';
+  if(b.wrong === 0) G.firstTry++;
+  if(!curBlock()) G.endTime = now();
+}
+function wrong(b, key){
+  b.wrong++; b.shake = 0.35; G.errors++; G.mario.shake = 0.3; G.buf = ''; G.ansBad = 1;
+  sfx.error();
+  if(key){ const el = keyEl(key); if(el){ el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 250); } }
+}
+function miss(b){
+  b.missed = true; G.errors++; G.buf = '';
+  sfx.miss();
+  G.parts.push({ type:'text', x:b.x, y:b.y - 10, txt:t('miss'), t:0, color:'#ff5050' });
+  if(!curBlock()) G.endTime = now();
+  renderPrompt(); renderHint();
+}
+function jump(b){
+  const m = G.mario; m.onGround = false; m.vy = JUMP_V; m.jumpTarget = b; sfx.jump();
+}
+function hitBlock(b){
+  b.hit = true; b.bump = 0.16; G.coins++;
+  const pts = b.wrong ? 50 : 100; G.score += pts;
+  sfx.coin();
+  G.parts.push({ type:'coin', x:b.x, y:b.y - 6, vy:-520, t:0 });
+  G.parts.push({ type:'text', x:b.x, y:b.y - 30, txt:String(pts), t:0, color:'#fff' });
+}
+
+function update(dt){
+  if(!G) return;
+  G.time += dt;
+  const m = G.mario;
+  if(G.countdown > 0){
+    const before = Math.ceil(G.countdown);
+    G.countdown -= dt;
+    if(G.countdown <= 0){ G.goT = 0.7; G.startTime = now(); sfx.go(); }
+    else if(Math.ceil(G.countdown) !== before) sfx.beep();
+  }
+  if(G.goT > 0) G.goT -= dt;
+
+  const tgt = nextTarget();
+  m.walking = false;
+  if(G.phase === 'play' && G.countdown <= 0){
+    if(!G.run){
+      // Relaxed: walk to the next block, wait underneath until it is answered.
+      if(tgt && m.onGround){
+        const dx = tgt.x - m.x;
+        if(dx > 1){
+          const backlog = G.blocks.filter(b => b.answered && !b.hit).length;
+          m.x += Math.min(dx, Math.min(dx * 7 + 40, 240 + backlog * 140) * dt);
+          m.walking = true;
+        } else {
+          m.x = tgt.x;
+          if(tgt.answered) jump(tgt);
+        }
+      }
+    } else {
+      // Running: Mario never stops — answer before he passes the block!
+      m.x += G.speed * dt; m.walking = m.onGround;
+      if(tgt){
+        if(tgt.answered){ if(m.onGround && m.x >= tgt.x - 24) jump(tgt); }
+        else if(m.x > tgt.x + 30) miss(tgt);
+      }
+    }
+    if(!tgt && m.onGround){ G.phase = 'flag'; if(!G.endTime) G.endTime = now(); }
+  }
+  if(G.phase === 'flag') updateFlag(dt);
+
+  if(!m.onGround){
+    m.vy += GRAV * dt; m.y += m.vy * dt;
+    const b = m.jumpTarget;
+    if(b && !b.hit && m.vy < 0 && m.y - 48 <= b.y + b.h && Math.abs(m.x - b.x) < b.w / 2 + 18){
+      hitBlock(b); m.y = b.y + b.h + 48; m.vy = 60;
+    }
+    if(m.y >= GY){
+      m.y = GY; m.vy = 0; m.onGround = true;
+      if(b && !b.hit) hitBlock(b);
+      m.jumpTarget = null;
+    }
+  }
+  if(m.walking) m.anim += dt * 9;
+  if(m.shake > 0) m.shake -= dt;
+  for(const b of G.blocks){ if(b.bump > 0) b.bump -= dt; if(b.shake > 0) b.shake -= dt; }
+  for(const p of G.parts){
+    p.t += dt;
+    if(p.type === 'coin'){ p.vy += 1500 * dt; p.y += p.vy * dt; }
+  }
+  G.parts = G.parts.filter(p => p.t < (p.type === 'coin' ? 0.62 : 0.9));
+}
+
+function updateFlag(dt){
+  const m = G.mario;
+  if(!m.onGround) return;
+  if(G.flagStage === 0){
+    m.walking = true; m.x = Math.min(G.flagX - 14, m.x + 240 * dt);
+    if(m.x >= G.flagX - 14){ G.flagStage = 1; G.flagT = 0; sfx.flag(); G.score += 500; }
+  } else if(G.flagStage === 1){
+    G.flagT += dt; G.flagDrop = Math.min(1, G.flagT / 1.0);
+    if(G.flagT > 1.3) G.flagStage = 2;
+  } else if(G.flagStage === 2){
+    m.walking = true; m.x += 170 * dt;
+    if(m.x >= G.castleX){ m.hidden = true; G.flagStage = 3; G.flagT = 0; }
+  } else if(G.flagStage === 3){
+    G.flagT += dt;
+    if(G.flagT > 0.5){ G.flagStage = 4; showResults(); }
+  }
+}
+
+/* ================= Drawing ================= */
+let cam = 0;
+function draw(){
+  const m = G.mario;
+  cam = Math.max(0, Math.min(m.x - 300, G.castleX + 200 - W));
+  // sky
+  ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, HGT);
+  // clouds (parallax)
+  for(let i = -1; i < 6; i++){
+    const base = Math.floor(cam * 0.3 / 360);
+    const cx = (base + i) * 360 - cam * 0.3 + 80, cy = 70 + ((base + i) % 3 + 3) % 3 * 28;
+    drawCloud(cx, cy);
+  }
+  // hills
+  for(let i = -1; i < 4; i++){
+    const base = Math.floor(cam * 0.55 / 520);
+    const hx = (base + i) * 520 - cam * 0.55, big = ((base + i) % 2 + 2) % 2 === 0;
+    drawHill(hx + 40, GY, big ? 220 : 140, big ? 110 : 64);
+  }
+  // bushes
+  for(let i = -1; i < 5; i++){
+    const base = Math.floor(cam / 440);
+    drawBush((base + i) * 440 - cam + 300, GY);
+  }
+  drawGround();
+  drawPipe(30 - cam, 64);
+  drawCastle(G.castleX - 60 - cam);
+  drawFlag(G.flagX - cam, G.flagDrop);
+  const cur = curBlock();
+  for(const b of G.blocks){
+    const sx = b.x - cam; if(sx < -150 || sx > W + 150) continue;
+    drawBlock(b, b === cur && G.phase === 'play');
+  }
+  if(!m.hidden){
+    const spr = !m.onGround ? SPR.jump : (m.walking && Math.floor(m.anim) % 2 ? SPR.walk : SPR.stand);
+    const sh = m.shake > 0 ? Math.sin(m.shake * 60) * 4 : 0;
+    ctx.drawImage(spr, Math.round(m.x - spr.width / 2 - cam + sh), Math.round(m.y - spr.height));
+  }
+  for(const p of G.parts){
+    const px = p.x - cam;
+    if(p.type === 'coin'){
+      const w = Math.abs(Math.cos(p.t * 18)) * 10 + 2;
+      ctx.fillStyle = '#000'; ctx.fillRect(px - w / 2 - 2, p.y - 14, w + 4, 28);
+      ctx.fillStyle = '#f8d820'; ctx.fillRect(px - w / 2, p.y - 12, w, 24);
+      ctx.fillStyle = '#fff6b0'; ctx.fillRect(px - w / 2, p.y - 12, Math.max(1, w / 3), 24);
+    } else {
+      txt(p.txt, px, p.y - p.t * 50, 'center', 12, p.color, 1 - p.t / 0.9);
+    }
+  }
+  drawHud();
+}
+function txt(s, x, y, align = 'left', size = 14, color = '#fff', alpha = 1){
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.font = `${size}px ${PXFONT}`; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#000'; ctx.fillText(s, x + 2, y + 2);
+  ctx.fillStyle = color; ctx.fillText(s, x, y);
+  ctx.globalAlpha = 1;
+}
+function drawHud(){
+  txt(t('score'), 24, 30); txt(String(G.score).padStart(6, '0'), 24, 52);
+  // coin icon
+  ctx.fillStyle = '#000'; ctx.fillRect(236, 33, 12, 20); ctx.fillStyle = '#f8d820'; ctx.fillRect(238, 35, 8, 16);
+  txt('×' + String(G.coins).padStart(2, '0'), 254, 52);
+  txt(t('level'), 480, 30, 'center'); txt(String(G.li + 1), 480, 52, 'center');
+  const el = G.startTime ? ((G.endTime || now()) - G.startTime) / 1000 : 0;
+  txt(t('time'), W - 24, 30, 'right'); txt(el.toFixed(1), W - 24, 52, 'right');
+  const total = G.blocks.length, n = G.blocks.filter(b => b.answered || b.missed).length;
+  txt(`${n}/${total}`, 680, 52, 'center', 12);
+  ctx.fillStyle = '#000'; ctx.fillRect(620, 26, 124, 12);
+  ctx.fillStyle = '#00d000'; ctx.fillRect(622, 28, 120 * n / total, 8);
+  if(G.countdown > 0){
+    txt(String(Math.ceil(G.countdown)), W / 2, 150, 'center', 48, '#f8d820');
+    txt(t('ready'), W / 2, 100, 'center', 18);
+  } else if(G.goT > 0){
+    txt(t('go'), W / 2, 150, 'center', 48, '#f8d820', Math.min(1, G.goT * 2));
+  }
+  if(!G.startTime && !G.run && G.phase === 'play' && G.time > 0.8){
+    const k = t(G.skill.kind === 'type' ? 'typeLetter' : 'typeAnswer');
+    txt(k, W / 2, 120, 'center', 14, '#fff', 0.6 + 0.4 * Math.sin(G.time * 5));
+  }
+}
+function drawCloud(x, y){
+  ctx.fillStyle = '#000';
+  [[0,10,22],[26,0,28],[54,10,22]].forEach(([dx,dy,r]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, r + 2, 0, 7); ctx.fill(); });
+  ctx.fillStyle = '#fff';
+  [[0,10,22],[26,0,28],[54,10,22]].forEach(([dx,dy,r]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, 7); ctx.fill(); });
+  ctx.fillRect(x - 20, y + 10, 96, 20);
+}
+function drawHill(x, base, w, h){
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x + w / 2, base, w / 2 + 3, h + 3, 0, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = '#00a800'; ctx.beginPath(); ctx.ellipse(x + w / 2, base, w / 2, h, 0, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = '#005800';
+  ctx.fillRect(x + w / 2 - 14, base - h * 0.6, 5, 14); ctx.fillRect(x + w / 2 + 9, base - h * 0.6, 5, 14);
+}
+function drawBush(x, y){
+  ctx.fillStyle = '#000';
+  [[0,16],[22,22],[44,16]].forEach(([dx,r]) => { ctx.beginPath(); ctx.arc(x + dx, y - 4, r + 2, Math.PI, 0); ctx.fill(); });
+  ctx.fillStyle = '#5ac800';
+  [[0,16],[22,22],[44,16]].forEach(([dx,r]) => { ctx.beginPath(); ctx.arc(x + dx, y - 4, r, Math.PI, 0); ctx.fill(); });
+  ctx.fillRect(x - 16, y - 6, 76, 6);
+}
+function drawGround(gy = GY, h = HGT){
+  const T = 32;
+  for(let tx = Math.floor(cam / T) * T; tx < cam + W + T; tx += T){
+    for(let ty = gy; ty < h; ty += T){
+      const x = tx - cam;
+      ctx.fillStyle = '#c84c0c'; ctx.fillRect(x, ty, T, T);
+      ctx.fillStyle = '#fcbcb0'; ctx.fillRect(x, ty, T, 2); ctx.fillRect(x, ty, 2, T);
+      ctx.fillStyle = '#000'; ctx.fillRect(x, ty + T - 2, T, 2); ctx.fillRect(x + T - 2, ty, 2, T);
+      ctx.fillRect(x + T / 2, ty + 2, 2, T / 2);
+    }
+  }
+}
+function drawPipe(x, h){
+  if(x < -90 || x > W) return;
+  ctx.fillStyle = '#000'; ctx.fillRect(x - 2, GY - h - 2, 68, h + 2);
+  ctx.fillStyle = '#00a800'; ctx.fillRect(x + 4, GY - h + 20, 56, h - 20);
+  ctx.fillStyle = '#80e060'; ctx.fillRect(x + 10, GY - h + 20, 6, h - 20);
+  ctx.fillStyle = '#000'; ctx.fillRect(x - 4, GY - h - 4, 72, 26);
+  ctx.fillStyle = '#00a800'; ctx.fillRect(x - 2, GY - h - 2, 68, 22);
+  ctx.fillStyle = '#80e060'; ctx.fillRect(x + 4, GY - h - 2, 6, 22);
+}
+function drawFlag(x, drop){
+  if(x < -60 || x > W + 60) return;
+  const top = GY - 240;
+  ctx.fillStyle = '#000'; ctx.fillRect(x - 3, top, 6, 240);
+  ctx.fillStyle = '#80e060'; ctx.fillRect(x - 1, top, 3, 240);
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(x, top - 6, 9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#00a800'; ctx.beginPath(); ctx.arc(x, top - 6, 7, 0, 7); ctx.fill();
+  const fy = top + 10 + drop * 180;
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(x - 2, fy); ctx.lineTo(x - 46, fy + 18); ctx.lineTo(x - 2, fy + 36); ctx.fill();
+  ctx.fillStyle = '#00a800'; ctx.beginPath(); ctx.arc(x - 16, fy + 18, 6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.fillRect(x - 16, GY - 32, 32, 32); ctx.fillStyle = '#c84c0c'; ctx.fillRect(x - 14, GY - 30, 28, 28);
+}
+function drawCastle(x){
+  if(x < -200 || x > W + 20) return;
+  const brick = (bx, by, w, h) => {
+    ctx.fillStyle = '#000'; ctx.fillRect(bx - 2, by - 2, w + 4, h + 2);
+    ctx.fillStyle = '#c84c0c'; ctx.fillRect(bx, by, w, h);
+    ctx.fillStyle = '#000';
+    for(let yy = by + 14; yy < by + h; yy += 14){ ctx.fillRect(bx, yy, w, 2); }
+    for(let yy = by, r = 0; yy < by + h; yy += 14, r++)
+      for(let xx = bx + (r % 2 ? 10 : 0); xx < bx + w; xx += 20) ctx.fillRect(xx, yy, 2, 14);
+  };
+  brick(x, GY - 110, 140, 110);
+  brick(x + 30, GY - 170, 80, 60);
+  for(let i = 0; i < 5; i++) brick(x + i * 30, GY - 126, 18, 16);
+  for(let i = 0; i < 3; i++) brick(x + 30 + i * 31, GY - 186, 18, 16);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + 52, GY - 56, 36, 56); ctx.beginPath(); ctx.arc(x + 70, GY - 56, 18, Math.PI, 0); ctx.fill();
+  ctx.fillRect(x + 44, GY - 150, 14, 24); ctx.fillRect(x + 82, GY - 150, 14, 24);
+}
+function drawBlock(b, isCur){
+  const bump = b.bump > 0 ? Math.sin((b.bump / 0.16) * Math.PI) * 12 : 0;
+  const sh = b.shake > 0 ? Math.sin(b.shake * 70) * 5 : 0;
+  const bx = Math.round(b.x - b.w / 2 - cam + sh), by = Math.round(b.y - bump);
+  if(isCur){
+    const a = 0.55 + 0.45 * Math.sin(G.time * 8);
+    ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 4; ctx.strokeRect(bx - 7, by - 7, b.w + 14, b.h + 14);
+    ctx.fillStyle = '#fff';
+    const ay = by - 22 + Math.sin(G.time * 6) * 3;
+    ctx.beginPath(); ctx.moveTo(b.x - cam - 9, ay); ctx.lineTo(b.x - cam + 9, ay); ctx.lineTo(b.x - cam, ay + 10); ctx.fill();
+  }
+  const fill = b.hit ? '#a0522d' : b.missed ? '#777' : '#f8a820';
+  ctx.fillStyle = '#000'; ctx.fillRect(bx - 2, by - 2, b.w + 4, b.h + 4);
+  ctx.fillStyle = fill; ctx.fillRect(bx, by, b.w, b.h);
+  if(!b.hit && !b.missed){
+    ctx.fillStyle = '#fcd890'; ctx.fillRect(bx, by, b.w, 3); ctx.fillRect(bx, by, 3, b.h);
+    ctx.fillStyle = '#c06000'; ctx.fillRect(bx, by + b.h - 3, b.w, 3); ctx.fillRect(bx + b.w - 3, by, 3, b.h);
+  }
+  ctx.fillStyle = b.hit ? '#5a2a0a' : '#6b2c00';
+  [[4,4],[b.w-7,4],[4,b.h-7],[b.w-7,b.h-7]].forEach(([dx,dy]) => ctx.fillRect(bx + dx, by + dy, 3, 3));
+  ctx.font = G.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const cx = bx + b.w / 2, cy = by + b.h / 2 + 2;
+  if(b.hit){ ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillText(b.label, cx, cy); }
+  else {
+    ctx.fillStyle = b.missed ? '#333' : '#6b2c00'; ctx.fillText(b.label, cx + 2, cy + 2);
+    ctx.fillStyle = b.missed ? '#ddd' : (b.answered ? '#d8ffd0' : '#fff'); ctx.fillText(b.label, cx, cy);
+  }
+  if(b.missed){
+    ctx.strokeStyle = '#ff3030'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(bx + 6, by + 6); ctx.lineTo(bx + b.w - 6, by + b.h - 6);
+    ctx.moveTo(bx + b.w - 6, by + 6); ctx.lineTo(bx + 6, by + b.h - 6); ctx.stroke();
+  }
+  // after a math block is solved, show its answer on top
+  if((b.hit || b.missed) && b.op) txt('=' + b.answer, b.x - cam, by - 10, 'center', 12, b.missed ? '#ffb0b0' : '#fff');
+}
+
+/* ================= Prompt panel, hint, on-screen keyboard ================= */
+function renderPrompt(){
+  const el = $('#prompt');
+  if(G.skill.kind === 'type'){
+    const cur = curBlock();
+    el.innerHTML = `<div class="strip">${G.blocks.map(b => {
+      const c = b === cur ? 'cur' : b.missed ? 'miss' : b.answered ? (b.wrong ? 'fix' : 'ok') : '';
+      const ch = b.answer === ' ' ? '<span class="sp">&nbsp;</span>' : esc(b.answer);
+      return `<span class="${c}">${ch}</span>`;
+    }).join('')}</div>`;
+    return;
+  }
+  const b = curBlock();
+  if(!b){ el.innerHTML = `<div class="math">${t('wellDone')}</div>`; return; }
+  const idx = G.blocks.indexOf(b) + 1;
+  const bad = G.ansBad ? ' bad' : ''; G.ansBad = 0;
+  const box = `<span class="ans${bad}">${esc(G.buf)}<span class="caret"></span></span>`;
+  const vertical = (b.op === '+' || b.op === '-') && G.skill.id !== 'add1' && G.skill.id !== 'sub1';
+  const body = vertical
+    ? `<div class="vert"><div>${b.a}</div><div><span class="op">${b.op}</span>${b.b}</div><div class="line"></div>${box}</div>`
+    : `<div class="math"><span>${b.a}</span><span>${b.op}</span><span>${b.b}</span><span>=</span>${box}</div>`;
+  const hint = `<div class="subline">${b.wrong >= 2 ? t('hintAns', b.answer) : b.wrong === 1 ? t('notQuite') : t('problemOf', idx, G.blocks.length)}</div>`;
+  el.innerHTML = body + hint;
+}
+
+function findKey(ch){
+  const lay = LAYOUTS[opts.layout];
+  if(ch === ' ') return { k:'space', finger:-1 };
+  const lo = ch.toLowerCase();
+  for(let r = 0; r < lay.rows.length; r++){
+    const c = lay.rows[r].indexOf(lo);
+    if(c >= 0) return { k: lo, finger: +lay.fing[r][c], shift: ch !== lo };
+  }
+  return null;
+}
+function keyEl(ch){ const f = findKey(ch); return f ? $(`#kbd [data-k="${CSS.escape(f.k)}"]`) : null; }
+function renderHint(){
+  const h = $('#hint');
+  if(G.skill.kind === 'math'){
+    h.innerHTML = t('mathHint');
+    return;
+  }
+  document.querySelectorAll('#kbd .next').forEach(e => e.classList.remove('next'));
+  const b = curBlock();
+  if(!b){ h.textContent = ''; return; }
+  const f = findKey(b.answer);
+  if(!f){ h.textContent = t('typeChar', b.answer); return; }
+  const kEl = $(`#kbd [data-k="${CSS.escape(f.k)}"]`); if(kEl) kEl.classList.add('next');
+  if(f.k === 'space'){ h.innerHTML = `<span class="dot" style="background:#e4e4e4"></span>${t('pressSpace')}`; return; }
+  let s = `<span class="dot" style="background:${FCOLORS[f.finger]}"></span>${t('useFinger', t('fingers')[f.finger].toUpperCase())}`;
+  if(f.shift){
+    const side = f.finger <= 3 ? 'R' : 'L';
+    const sEl = $(`#kbd [data-k="shift${side}"]`); if(sEl) sEl.classList.add('next');
+    s += ` + ${t('shiftSide', side === 'R')}`;
+  }
+  h.innerHTML = s;
+}
+function buildKbd(){
+  const lay = LAYOUTS[opts.layout];
+  const key = (k, label, cls, w = 1) => `<div class="key ${cls}" data-k="${esc(k)}" style="width:calc(var(--u)*${w})">${esc(label)}</div>`;
+  const deco = (label, w, wide) => `<div class="key deco ${wide ? 'wide' : ''}" style="width:calc(var(--u)*${w})">${label}</div>`;
+  const rowKeys = r => [...lay.rows[r]].map((c, i) => key(c, c.toUpperCase(), 'f' + lay.fing[r][i] + (/[fj]/.test(c) && r === 2 ? ' home' : ''))).join('');
+  const r2extra = lay.rows[2].length >= 12 ? 1.2 : 1.9, r3extra = lay.rows[3].length >= 11 ? 1.4 : 2.4;
+  $('#kbd').innerHTML = [
+    rowKeys(0) + deco('⌫', 1.6, true),
+    deco('TAB', 1.5, true) + rowKeys(1) + deco('', 1.1, true),
+    deco('CAPS', 1.8, true) + rowKeys(2) + deco('↵', r2extra, true),
+    key('shiftL', 'SHIFT', 'f0', 1.3) + rowKeys(3) + key('shiftR', 'SHIFT', 'f7', r3extra),
+    key('space', '', 'thumb', 6.5)
+  ].map(r => `<div class="krow">${r}</div>`).join('');
+}
+function flashKey(ch){
+  const el = keyEl(ch); if(!el) return;
+  el.classList.add('press'); setTimeout(() => el.classList.remove('press'), 90);
+}
+$('#kbd').addEventListener('pointerdown', e => {
+  const el = e.target.closest('.key[data-k]'); if(!el) return;
+  e.preventDefault(); ac();
+  const k = el.dataset.k;
+  if(k.startsWith('shift')){ virtShift = !virtShift; el.classList.toggle('press', virtShift); return; }
+  const ch = k === 'space' ? ' ' : (virtShift ? k.toUpperCase() : k);
+  if(virtShift){ virtShift = false; document.querySelectorAll('#kbd [data-k^="shift"]').forEach(s => s.classList.remove('press')); }
+  onKey(ch);
+});
+$('#numpad').innerHTML = ['7','8','9','4','5','6','1','2','3'].map(n => `<button data-k="${n}">${n}</button>`).join('')
+  + `<button data-k="Backspace" class="del">⌫</button><button data-k="0">0</button><button data-k="Enter" class="ok">✓</button>`;
+$('#numpad').addEventListener('pointerdown', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  e.preventDefault(); ac(); onKey(b.dataset.k);
+});
+
+/* ================= Results ================= */
+function showResults(){
+  const total = G.blocks.length;
+  const secs = Math.max(1, ((G.endTime || now()) - (G.startTime || now())) / 1000);
+  const missed = G.blocks.filter(b => b.missed).length;
+  let acc, rows;
+  if(G.skill.kind === 'type'){
+    acc = G.done / Math.max(1, G.done + G.errors);
+    const wpm = (G.done / 5) / (secs / 60);
+    rows = [[t('accuracy'), Math.round(acc * 100) + '%'], [t('speed'), Math.round(wpm) + ' ' + t('wpm')], [t('mistakes'), G.errors], [t('timeLbl'), secs.toFixed(1) + ' ' + t('sec')]];
+  } else {
+    acc = G.firstTry / total;
+    rows = [[t('firstTry'), `${G.firstTry} / ${total}`], [t('accuracy'), Math.round(acc * 100) + '%'], [t('perProblem'), (secs / total).toFixed(1) + ' ' + t('sec')], [t('totalTime'), secs.toFixed(1) + ' ' + t('sec')]];
+  }
+  if(missed) rows.push([t('missedBlocks'), missed]);
+  rows.push([t('scoreLbl'), G.score]);
+  const stars = acc >= 0.95 ? 3 : acc >= 0.85 ? 2 : acc >= 0.7 ? 1 : 0;
+  const sid = G.skill.id;
+  prog[sid] = prog[sid] || [];
+  prog[sid][G.li] = Math.max(prog[sid][G.li] || 0, stars);
+  store.set('slb-progress', prog);
+  const levels = levelsOf(G.skill), hasNext = G.li + 1 < levels.length && unlocked(G.skill, G.li + 1);
+  const title = t(stars === 3 ? 'perfect' : stars ? 'clear' : 'keepPracticing');
+  const msg = t(stars ? (hasNext ? 'nextUnlocked' : 'allDone') : 'need70');
+  $('#results').innerHTML = `<div class="res">
+    <h2>${title}</h2>
+    <div class="stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3 - stars)}</span></div>
+    <table>${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
+    <p style="margin:0 0 14px;font-size:14px">${msg}</p>
+    <div class="row">
+      ${hasNext ? `<button class="btn primary" data-a="next">${t('next')}</button>` : ''}
+      <button class="btn ${hasNext ? '' : 'primary'}" data-a="retry">${t('again')}</button>
+      <button class="btn" data-a="menu">${t('levels')}</button>
+    </div></div>`;
+  $('#results').hidden = false;
+  G.phase = 'done';
+}
+$('#results').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if(!b) return;
+  resultAction(b.dataset.a);
+});
+function resultAction(a){
+  if(a === 'next') startLevel(G.skill, G.li + 1);
+  else if(a === 'retry') startLevel(G.skill, G.li);
+  else toMenu();
+}
+function toMenu(){
+  if(screen === 'learn') learnStop();
+  screen = 'menu'; $('#game').hidden = true; $('#learn').hidden = true; $('#menu').hidden = false;
+  if(G) menuSkill = G.skill;
+  G = null; renderMenu();
+}
+$('#quitBtn').onclick = toMenu;
+$('#restartBtn').onclick = () => { if(G){ const s = G.skill, l = G.li; startLevel(s, l); } };
+
+/* ================= Learn: animated explanations ================= */
+const lcv = $('#lcv'), lctx = lcv.getContext('2d');
+const LHT = 480, LGY = 416, LEDGE = 266;
+const MUSH = [
+  "....RRRR....",
+  "..RRWWRRRR..",
+  ".RRWWWWRRRR.",
+  ".RWWWWWWRRW.",
+  "RRWWWWWWRWWR",
+  "RRRWWWWRRWWR",
+  "RRRRRRRRRRRR",
+  ".RRRRRRRRRR.",
+  "..CCKCCKCC..",
+  "..CCKCCKCC..",
+  "..CCCCCCCC..",
+  "...CCCCCC...",
+];
+const GOOMBA = [
+  "....BBBB....",
+  "...BBBBBB...",
+  "..BBBBBBBB..",
+  ".BKWBBBBWKB.",
+  ".BKWKBBKWKB.",
+  "BBBWKBBKWBBB",
+  "BBBBBBBBBBBB",
+  ".BBBBBBBBBB.",
+  "...CCCCCC...",
+  "..CCCCCCCC..",
+  ".KKKCCCCKKK.",
+  "KKKKK..KKKKK",
+];
+// Adds a 2px black outline so sprites pop against the sky and hills.
+function outlined(c){
+  const o = document.createElement('canvas'); o.width = c.width + 4; o.height = c.height + 4;
+  const x = o.getContext('2d');
+  for(const [dx, dy] of [[0,2],[4,2],[2,0],[2,4]]) x.drawImage(c, dx, dy);
+  x.globalCompositeOperation = 'source-in'; x.fillStyle = '#000'; x.fillRect(0, 0, o.width, o.height);
+  x.globalCompositeOperation = 'source-over'; x.drawImage(c, 2, 2);
+  return o;
+}
+const LSPR = {
+  mushR: outlined(sprite(MUSH, { R:'#e52521', W:'#fff', C:'#fcd8a8', K:'#000' })),
+  mushG: outlined(sprite(MUSH, { R:'#1aa31a', W:'#fff', C:'#fcd8a8', K:'#000' })),
+  goomba: outlined(sprite(GOOMBA, { B:'#b5501a', K:'#000', W:'#fff', C:'#fcbcb0' })),
+};
+
+const TOPICS = {
+  add: { tab:tx('+ Adding', '+ Összeadás'), op:'+', def:[3, 4], rand:() => [randInt(1, 9), randInt(1, 9)],
+    card:tx(['Adding', 'Put mushrooms together'], ['Összeadás', 'Gombák egy helyre']),
+    A:{ label:tx('Red mushrooms', 'Piros gombák'), min:1, max:10, color:'#e52521' }, B:{ label:tx('Green mushrooms', 'Zöld gombák'), min:0, max:10, color:'#1aa31a' } },
+  sub: { tab:tx('- Taking away', '- Kivonás'), op:'-', def:[7, 3], rand:() => { const a = randInt(3, 12); return [a, randInt(1, a)]; },
+    card:tx(['Taking away', 'Mario stomps Goombas'], ['Kivonás', 'Mario rátapos a Goombákra']),
+    A:{ label:tx('Goombas', 'Goombák'), min:1, max:18, color:'#b5501a' }, B:{ label:tx('Mario stomps', 'Mario rátapos'), min:0, max:18, color:'#777' } },
+  mul: { tab:tx('× Groups of', '· Szorzás'), op:tx('×', '·'), def:[3, 4], rand:() => [randInt(2, 5), randInt(2, 6)],
+    card:tx(['Times', 'Coins in equal groups'], ['Szorzás', 'Érmék egyforma csoportokban']),
+    A:{ label:tx('Groups', 'Csoportok'), min:1, max:9, color:'#2038ec' }, B:{ label:tx('Coins in each group', 'Érme csoportonként'), min:1, max:10, color:'#c88a00' } },
+};
+const L = { topic:'add', nums:{}, objs:[], run:0, mario:null, ledge:false, t:0 };
+for(const k in TOPICS) L.nums[k] = TOPICS[k].def.slice();
+
+/* ---- voice ---- */
+let voiceOn = store.get('slb-voice', true);
+const voices = { en:null, hu:null };
+const canSpeak = 'speechSynthesis' in window;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  voices.en = vs.find(v => /^en[-_]US/i.test(v.lang) && /Samantha|Google US|Female/i.test(v.name))
+           || vs.find(v => /^en/i.test(v.lang)) || null;
+  voices.hu = vs.find(v => /^hu/i.test(v.lang)) || null;
+}
+if(canSpeak){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(text){
+  return new Promise(res => {
+    if(!voiceOn || !canSpeak){ res(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === 'hu' ? 'hu-HU' : 'en-US'; if(voices[lang]) u.voice = voices[lang]; u.rate = 0.95; u.pitch = 1.15;
+    let done = false; const fin = () => { if(!done){ done = true; res(); } };
+    u.onend = fin; u.onerror = fin; setTimeout(fin, 900 + text.length * 110);
+    speechSynthesis.speak(u);
+  });
+}
+function setVoiceBtn(){ $('#voiceBtn').textContent = t(voiceOn ? 'voiceOn' : 'voiceOff'); $('#voiceBtn').hidden = !canSpeak; }
+$('#voiceBtn').onclick = () => { voiceOn = !voiceOn; store.set('slb-voice', voiceOn); if(!voiceOn && canSpeak) speechSynthesis.cancel(); setVoiceBtn(); };
+
+/* ---- scene objects & timing ---- */
+const CANCEL = Symbol('cancel');
+const lchk = id => { if(id !== L.run) throw CANCEL; };
+const lwait = (ms, id) => new Promise(r => setTimeout(r, ms)).then(() => lchk(id));
+function mk(kind, x, y, extra){
+  const o = { kind, x, y, alpha:1, label:null, labelT:0, tw:null, face:1, ...extra };
+  L.objs.push(o); return o;
+}
+function tween(o, x, y, dur, arc = 0){ o.tw = { fx:o.x, fy:o.y, tx:x, ty:y, t:0, dur, arc }; }
+function setLabel(o, text, color = '#fff'){ o.label = text; o.labelColor = color; o.labelT = 0; }
+async function say(id, text, spoken = text){
+  lchk(id); $('#lSay').textContent = text;
+  await Promise.all([speak(spoken), lwait(Math.max(1300, text.length * 55), id)]);
+  lchk(id);
+}
+async function countOut(id, o, n, color){
+  setLabel(o, String(n), color); sfx.count(n);
+  await Promise.all([speak(String(n)), lwait(450, id)]);
+  lchk(id);
+}
+const eq = html => { $('#lEq').innerHTML = html; };
+const num = (topicSide, v) => `<span style="color:${TOPICS[L.topic][topicSide].color}">${v}</span>`;
+const Q = '<span class="cQ">?</span>';
+async function hop(id, h = 70){ tween(L.mario, L.mario.x, LGY, 0.5, h); sfx.jump(); await lwait(520, id); }
+async function celebrate(id){
+  sfx.flag();
+  const m = L.mario;
+  for(let k = 0; k < 30; k++) mk('spark', m.x, m.y - 40, { vx:(Math.random() - 0.5) * 600, vy:-300 - Math.random() * 450, life:1.4, color:pick(['#f8d820','#fff','#e52521','#1aa31a','#5cf']) });
+  await hop(id, 90); await hop(id, 90);
+}
+function slots(n, cx, perRow, sp){
+  const out = [];
+  for(let i = 0; i < n; i++){
+    const row = Math.floor(i / perRow), col = i % perRow, cnt = Math.min(perRow, n - row * perRow);
+    out.push({ x: cx + (col - (cnt - 1) / 2) * sp, y: row ? LEDGE : LGY });
+  }
+  return out;
+}
+
+/* ---- the three lessons ---- */
+async function releaseGroup(id, block, kind, places, color){
+  await hop(id, 80);
+  block.bump = 0.16;
+  const made = [];
+  for(let i = 0; i < places.length; i++){
+    const o = mk(kind, block.x, block.y - 30, { lh:46 });
+    tween(o, places[i].x, places[i].y, 0.6, 80); sfx.pop();
+    await lwait(600, id);
+    await countOut(id, o, i + 1, color);
+    made.push(o);
+  }
+  return made;
+}
+async function lessonAdd(id, a, b){
+  const tot = a + b;
+  eq(`${num('A', a)} + ${num('B', b)} = ${Q}`);
+  await say(id, t('addIntro', a, b));
+  await say(id, t('addFirst', a));
+  const red = await releaseGroup(id, L.blockA, 'mushR', slots(a, 250, 5, 68), '#fff');
+  await say(id, t('thatsN', a));
+  let green = [];
+  if(b){
+    await say(id, t('addMore', b));
+    green = await releaseGroup(id, L.blockB, 'mushG', slots(b, 710, 5, 68), '#fff');
+    await say(id, t('thatsN', b));
+  } else {
+    await say(id, t('addZero'));
+  }
+  await say(id, t('together'));
+  const all = [...red, ...green], spots = slots(tot, 480, 10, 72);
+  all.forEach((o, i) => { o.label = null; tween(o, spots[i].x, spots[i].y, 0.9, 50); });
+  sfx.pop(); await lwait(1000, id);
+  for(let i = 0; i < tot; i++) await countOut(id, all[i], i + 1, '#f8d820');
+  if(tot > 10) await say(id, t('tenMore', tot - 10, tot));
+  eq(`${num('A', a)} + ${num('B', b)} = <span class="cR">${tot}</span>`);
+  $('#lSay').textContent = t('addEnd', a, b, tot);
+  await Promise.all([celebrate(id), speak(t('addEnd', a, b, tot))]);
+}
+async function lessonSub(id, a, b){
+  const left = a - b;
+  eq(`${num('A', a)} - ${num('B', b)} = ${Q}`);
+  await say(id, t('subIntro', a, b));
+  const spots = slots(a, 480, 10, 72);
+  const gs = spots.map((s, i) => mk('goomba', 1010 + i * 46, s.y, { lh:46 }));
+  gs.forEach((g, i) => tween(g, spots[i].x, spots[i].y, 1.6 + i * 0.05));
+  await say(id, t('subCome', a));
+  await lwait(400, id);
+  for(let i = 0; i < a; i++) await countOut(id, gs[i], i + 1, '#fff');
+  gs.forEach(g => g.label = null);
+  const m = L.mario;
+  if(b){
+    await say(id, t('subStomp', b));
+    for(let j = 0; j < b; j++){
+      const g = gs[a - 1 - j];
+      tween(m, g.x, g.y - 34, 0.6, 110); sfx.jump();
+      await lwait(600, id);
+      g.squash = true; g.fadeTo = 0.35; sfx.stomp();
+      for(let k = 0; k < 6; k++) mk('spark', g.x, g.y - 10, { vx:(Math.random() - 0.5) * 260, vy:-120 - Math.random() * 160, life:0.5, color:'#fff' });
+      await countOut(id, g, j + 1, '#ff4040');
+    }
+    tween(m, 50, LGY, 0.8, 90); await lwait(850, id);
+    await say(id, t('subGone', b));
+  } else {
+    await say(id, t('subNone'));
+  }
+  if(left){
+    await say(id, t('subLeft'));
+    for(let i = 0; i < left; i++) await countOut(id, gs[i], i + 1, '#f8d820');
+  } else {
+    await say(id, t('subZero'));
+  }
+  eq(`${num('A', a)} - ${num('B', b)} = <span class="cR">${left}</span>`);
+  $('#lSay').textContent = t('subEnd', a, b, left);
+  await Promise.all([celebrate(id), speak(t('subEnd', a, b, left))]);
+}
+async function lessonMul(id, a, b){
+  const tot = a * b;
+  const sums = n => Array(n).fill(num('B', b)).join(' + ');
+  const op = MUL();
+  eq(`${num('A', a)} ${op} ${num('B', b)} = ${Q}`);
+  await say(id, t('mulIntro', a, b));
+  const totals = [];
+  for(let i = 0; i < a; i++){
+    const r = L.rows[i];
+    if(i === 0) await say(id, t('mulFirst', b));
+    else if(i === 1) await say(id, t('mulAnother', b));
+    else $('#lSay').textContent = t('mulGroupN', i + 1, b);
+    hop(id, 50).catch(() => {});
+    r.block.bump = 0.16; r.block.used = true; r.block.text = String(i + 1);
+    const half = Math.min(28, (r.xs[1] - r.xs[0] || 56) / 2);
+    mk('gbox', r.xs[0] - half, r.y - r.cs - 8, { w: r.xs[b - 1] - r.xs[0] + half * 2, h: r.cs + 14, alpha:0, fadeTo:1 });
+    const coins = [];
+    for(let j = 0; j < b; j++){
+      const c = mk('coin', r.block.x, r.y, { size:r.cs, lh:r.cs + 8 });
+      tween(c, r.xs[j], r.y, 0.4, 30); coins.push(c);
+      if(i === 0){ sfx.pop(); await lwait(400, id); await countOut(id, c, j + 1, '#fff'); }
+      else { sfx.count(j); await lwait(120, id); }
+    }
+    coins.forEach(c => c.label = null);
+    await lwait(250, id);
+    const run = (i + 1) * b; totals.push(run);
+    const lbl = mk('text', r.totalX, r.y - r.cs / 2 + r.font / 2, { text:String(run), size:r.font, color:'#f8d820' });
+    setLabel(lbl, '', '#fff'); sfx.coin();
+    eq(`${num('A', a)} ${op} ${num('B', b)} = ${Q}<div class="line2">${sums(i + 1)} = ${run}</div>`);
+    await Promise.all([speak(String(run)), lwait(800, id)]); lchk(id);
+  }
+  if(a > 1) await say(id, t('mulCounted', b, totals.join(', ')));
+  eq(`${num('A', a)} ${op} ${num('B', b)} = <span class="cR">${tot}</span><div class="line2">${sums(a)} = ${tot}</div>`);
+  $('#lSay').textContent = t('mulEnd', a, b, tot);
+  await Promise.all([celebrate(id), speak(t('mulEnd', a, b, tot))]);
+}
+const LESSON_FN = { add:lessonAdd, sub:lessonSub, mul:lessonMul };
+
+/* ---- scene setup, controls ---- */
+function setupLearn(){
+  const [a, b] = L.nums[L.topic];
+  L.objs = []; L.ledge = false; L.rows = null;
+  L.mario = mk('mario', 50, LGY);
+  if(L.topic === 'add'){
+    L.ledge = a > 5 || b > 5 || a + b > 10;
+    L.blockA = mk('block', 250, 150, { size:48, text:'?' });
+    L.blockB = mk('block', 710, 150, { size:48, text:'?' });
+  } else if(L.topic === 'sub'){
+    L.ledge = a > 10;
+  } else {
+    const avail = LGY - 80 - 16, rowH = Math.min(86, avail / a), top = 16 + (avail - a * rowH) / 2;
+    const bs = Math.min(52, rowH - 10), cs = Math.min(44, rowH - 14), sp = Math.min(70, 540 / b);
+    L.rows = [];
+    for(let i = 0; i < a; i++){
+      const y = top + (i + 1) * rowH - 6;
+      const xs = Array.from({ length:b }, (_, j) => 190 + j * sp);
+      L.rows.push({ y, cs, xs, font:Math.min(26, Math.round(rowH * 0.45)), totalX: xs[b - 1] + 80,
+        block: mk('block', 110, y, { size:bs, text:'?' }) });
+    }
+  }
+}
+function learnStop(){ L.run++; if(canSpeak) speechSynthesis.cancel(); }
+function learnReset(){
+  learnStop(); setupLearn();
+  const T = TOPICS[L.topic], [a, b] = L.nums[L.topic];
+  $('#lSay').textContent = t('pressShow');
+  eq(`${num('A', a)} ${tr(T.op)} ${num('B', b)} = ${Q}`);
+}
+async function learnPlay(){
+  learnReset(); ac();
+  const id = L.run, [a, b] = L.nums[L.topic];
+  try{ await LESSON_FN[L.topic](id, a, b); }
+  catch(e){ if(e !== CANCEL) console.error(e); }
+}
+function renderLearnCtrl(){
+  const T = TOPICS[L.topic], [a, b] = L.nums[L.topic];
+  $('#learnTabs').innerHTML = Object.entries(TOPICS).map(([k, tp]) => `<button class="btn ${k === L.topic ? 'sel' : ''}" data-t="${k}">${tr(tp.tab)}</button>`).join('');
+  const stepper = (side, v) => `<div class="stepper"><span class="slabel"><i style="background:${T[side].color}"></i>${tr(T[side].label)}</span>
+    <div class="srow"><button class="btn" data-s="${side}-">−</button><div class="qblock big">${v}</div><button class="btn" data-s="${side}+">+</button></div></div>`;
+  $('#learnCtrl').innerHTML = stepper('A', a) + `<div class="opsign">${tr(T.op)}</div>` + stepper('B', b)
+    + `<div class="lbtns"><button class="btn primary big" id="lPlay">${t('showMe')}</button><button class="btn big" id="lRand">${t('newNums')}</button></div>`;
+}
+$('#learnTabs').onclick = e => {
+  const b = e.target.closest('[data-t]'); if(!b) return;
+  L.topic = b.dataset.t; renderLearnCtrl(); learnPlay();
+};
+$('#learnCtrl').onclick = e => {
+  const btn = e.target.closest('button'); if(!btn) return;
+  const T = TOPICS[L.topic], n = L.nums[L.topic];
+  if(btn.id === 'lPlay'){ learnPlay(); return; }
+  if(btn.id === 'lRand'){ L.nums[L.topic] = T.rand(); renderLearnCtrl(); learnPlay(); return; }
+  const s = btn.dataset.s; if(!s) return;
+  const i = s[0] === 'A' ? 0 : 1, side = T[s[0]];
+  n[i] = Math.max(side.min, Math.min(side.max, n[i] + (s[1] === '+' ? 1 : -1)));
+  if(L.topic === 'sub') n[1] = Math.min(n[1], n[0]);
+  sfx.key(); renderLearnCtrl(); learnReset();
+};
+function openLearn(topic){
+  screen = 'learn'; L.topic = topic;
+  $('#menu').hidden = true; $('#game').hidden = true; $('#learn').hidden = false;
+  window.scrollTo({ top:0 });
+  setVoiceBtn(); renderLearnCtrl(); learnPlay();
+}
+$('#learnBack').onclick = toMenu;
+
+function renderLearnCards(){
+  const coinCanvas = document.createElement('canvas'); coinCanvas.width = coinCanvas.height = 40;
+  const saved = ctx; ctx = coinCanvas.getContext('2d'); drawCoin(20, 38, 34); ctx = saved;
+  const pics = { add:LSPR.mushR, sub:LSPR.goomba, mul:coinCanvas };
+  $('#learnCards').innerHTML = Object.entries(pics).map(([k, c]) => {
+    const [n, s] = tr(TOPICS[k].card);
+    return `<button class="skill" data-t="${k}"><img src="${c.toDataURL()}" alt=""><b>${n}</b><small>${s}</small></button>`;
+  }).join('');
+}
+$('#learnCards').onclick = e => { const b = e.target.closest('[data-t]'); if(b) openLearn(b.dataset.t); };
+
+/* ---- learn update & draw ---- */
+function updateLearn(dt){
+  L.t += dt;
+  for(const o of L.objs){
+    const tw = o.tw;
+    if(tw){
+      tw.t += dt; const p = Math.min(1, tw.t / tw.dur), e = tw.arc ? p : 1 - (1 - p) * (1 - p);
+      o.x = tw.fx + (tw.tx - tw.fx) * e; o.y = tw.fy + (tw.ty - tw.fy) * e - tw.arc * Math.sin(Math.PI * p);
+      if(tw.tx !== tw.fx) o.face = tw.tx < tw.fx ? -1 : 1;
+      if(p >= 1) o.tw = null;
+    }
+    o.labelT += dt;
+    if(o.bump > 0) o.bump -= dt;
+    if(o.squash) o.flat = Math.min(1, (o.flat || 0) + dt * 8);
+    if(o.fadeTo !== undefined) o.alpha += (o.fadeTo - o.alpha) * Math.min(1, dt * 3);
+    if(o.kind === 'spark'){ o.vy += 900 * dt; o.x += o.vx * dt; o.y += o.vy * dt; o.life -= dt; }
+  }
+  L.objs = L.objs.filter(o => o.kind !== 'spark' || o.life > 0);
+}
+function drawCoin(x, y, s){
+  const w = Math.round(s * 0.66), h = s, l = Math.round(x - w / 2), t = Math.round(y - h);
+  ctx.fillStyle = '#000'; ctx.fillRect(l - 2, t + 2, w + 4, h - 4); ctx.fillRect(l, t - 2, w, h + 4);
+  ctx.fillStyle = '#f8d820'; ctx.fillRect(l, t + 2, w, h - 4); ctx.fillRect(l + 2, t, w - 4, h);
+  ctx.fillStyle = '#fff6b0'; ctx.fillRect(l + 3, t + 4, 3, h - 8);
+  ctx.fillStyle = '#c88a00'; ctx.fillRect(Math.round(x), t + 5, 3, h - 10);
+}
+function drawQBlock(o){
+  const s = o.size, bx = Math.round(o.x - s / 2);
+  const by = Math.round(o.y - s - (o.bump > 0 ? Math.sin(o.bump / 0.16 * Math.PI) * 12 : 0));
+  ctx.fillStyle = '#000'; ctx.fillRect(bx - 2, by - 2, s + 4, s + 4);
+  ctx.fillStyle = o.used ? '#a0522d' : '#f8a820'; ctx.fillRect(bx, by, s, s);
+  if(!o.used){
+    ctx.fillStyle = '#fcd890'; ctx.fillRect(bx, by, s, 3); ctx.fillRect(bx, by, 3, s);
+    ctx.fillStyle = '#c06000'; ctx.fillRect(bx, by + s - 3, s, 3); ctx.fillRect(bx + s - 3, by, 3, s);
+  }
+  ctx.fillStyle = '#6b2c00';
+  [[4,4],[s-7,4],[4,s-7],[s-7,s-7]].forEach(([dx, dy]) => ctx.fillRect(bx + dx, by + dy, 3, 3));
+  const fs = Math.round(s * 0.42);
+  ctx.font = `${fs}px ${PXFONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#6b2c00'; ctx.fillText(o.text, bx + s / 2 + 2, by + s / 2 + 3);
+  ctx.fillStyle = '#fff'; ctx.fillText(o.text, bx + s / 2, by + s / 2 + 1);
+}
+function drawLedge(){
+  for(let x = 100; x < 860; x += 32){
+    ctx.fillStyle = '#000'; ctx.fillRect(x, LEDGE, 32, 24);
+    ctx.fillStyle = '#c84c0c'; ctx.fillRect(x + 1, LEDGE + 2, 30, 20);
+    ctx.fillStyle = '#fcbcb0'; ctx.fillRect(x + 1, LEDGE + 2, 30, 2);
+    ctx.fillStyle = '#000'; ctx.fillRect(x + 1, LEDGE + 12, 30, 2); ctx.fillRect(x + 15, LEDGE + 2, 2, 10);
+  }
+}
+const DRAW_ORDER = { gbox:-1, block:0, text:1, coin:2, mushR:2, mushG:2, goomba:2, mario:3, spark:4 };
+function drawLearn(){
+  const saved = ctx; ctx = lctx; cam = 0;
+  ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, LHT);
+  if(L.topic !== 'mul'){ drawCloud(160, 70); drawCloud(560, 40); drawCloud(860, 100); }
+  drawHill(-60, LGY, 280, 130); drawHill(620, LGY, 180, 72);
+  drawBush(400, LGY); drawBush(880, LGY);
+  if(L.ledge) drawLedge();
+  drawGround(LGY, LHT);
+  const objs = L.objs.slice().sort((p, q) => DRAW_ORDER[p.kind] - DRAW_ORDER[q.kind]);
+  for(const o of objs){
+    ctx.globalAlpha = o.alpha;
+    if(o.kind === 'block') drawQBlock(o);
+    else if(o.kind === 'gbox'){
+      ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.strokeRect(o.x, o.y, o.w, o.h); ctx.setLineDash([]);
+    }
+    else if(o.kind === 'coin') drawCoin(o.x, o.y, o.size);
+    else if(o.kind === 'text'){
+      const pop = 1 + Math.max(0, 0.3 - o.labelT) * 2;
+      txt(o.text, o.x, o.y, 'center', Math.round(o.size * pop), o.color);
+    } else if(o.kind === 'spark'){
+      ctx.fillStyle = o.color; ctx.fillRect(o.x - 3, o.y - 3, 6, 6);
+    } else if(o.kind === 'mario'){
+      const moving = o.tw && !o.tw.arc && o.tw.tx !== o.tw.fx;
+      const spr = o.tw && o.tw.arc ? SPR.jump : (moving && Math.floor(L.t * 9) % 2 ? SPR.walk : SPR.stand);
+      ctx.save(); ctx.translate(Math.round(o.x), Math.round(o.y)); ctx.scale(o.face, 1);
+      ctx.drawImage(spr, -spr.width / 2, -spr.height); ctx.restore();
+    } else {
+      const s = LSPR[o.kind], w = s.width, h = s.height * (1 - 0.65 * (o.flat || 0));
+      const walking = o.kind === 'goomba' && o.tw && !o.tw.arc && Math.floor(L.t * 6) % 2;
+      ctx.save(); ctx.translate(Math.round(o.x), Math.round(o.y)); if(walking) ctx.scale(-1, 1);
+      ctx.drawImage(s, -w / 2, -h, w, h); ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // number labels on top of everything
+  for(const o of objs){
+    if(!o.label) continue;
+    const pop = 1 + Math.max(0, 0.3 - o.labelT) * 2;
+    const top = o.y - (o.lh || 40) * (o.flat ? 1 - 0.6 * o.flat : 1);
+    txt(o.label, o.x, top - 6, 'center', Math.round(20 * pop), o.labelColor);
+  }
+  ctx = saved;
+}
+
+/* ================= Input & loop ================= */
+window.addEventListener('keydown', e => {
+  if(screen === 'learn' && e.key === 'Escape'){ toMenu(); return; }
+  if(screen !== 'game' || !G) return;
+  if(e.key === 'Escape'){ toMenu(); return; }
+  if(G.phase === 'done'){
+    if(e.key === 'Enter'){ e.preventDefault(); const p = $('#results .primary'); if(p) resultAction(p.dataset.a); }
+    return;
+  }
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(e.key === ' ' || e.key === 'Backspace' || e.key === 'Enter' || e.key === "'" || e.key === '/' || e.key === 'Tab') e.preventDefault();
+  if(e.repeat) return;
+  ac();
+  onKey(e.key);
+});
+
+let last = performance.now();
+function loop(t){
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  if(screen === 'game' && G){ update(dt); if(G) draw(); }
+  else if(screen === 'learn'){ updateLearn(dt); drawLearn(); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+applyLang();
+if(document.fonts && document.fonts.load) document.fonts.load(`16px ${PXFONT}`).catch(() => {});
+</script>
+</body>
+</html>
